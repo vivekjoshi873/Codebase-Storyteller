@@ -1,0 +1,92 @@
+import os
+from uuid import UUID
+
+import chromadb
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+class ChromaStore:
+    def __init__(self) -> None:
+        persist_dir = os.getenv("CHROMA_PERSIST_DIR", "./chroma_data")
+        self._client = chromadb.PersistentClient(path=persist_dir)
+        self._collection = self._client.get_or_create_collection(
+            name="code_chunks",
+            metadata={"hnsw:space": "cosine"},
+        )
+
+    def add_chunks(
+        self,
+        repo_id: UUID,
+        chunks: list[dict],
+        embeddings: list[list[float]],
+    ) -> None:
+        if not chunks:
+            return
+
+        repo_id_str = str(repo_id)
+        ids: list[str] = []
+        documents: list[str] = []
+        metadatas: list[dict] = []
+
+        for chunk in chunks:
+            filepath = chunk["filepath"]
+            chunk_index = chunk["chunk_index"]
+            safe_path = filepath.replace("/", "__")
+            chunk_id = f"{repo_id_str}_{safe_path}_{chunk_index}"
+            ids.append(chunk_id)
+            documents.append(chunk["content"])
+            metadatas.append(
+                {
+                    "filepath": filepath,
+                    "repo_id": repo_id_str,
+                    "chunk_index": str(chunk_index),
+                }
+            )
+
+        try:
+            self._collection.delete(where={"repo_id": repo_id_str})
+        except Exception:
+            pass
+
+        self._collection.add(
+            ids=ids,
+            embeddings=embeddings,
+            documents=documents,
+            metadatas=metadatas,
+        )
+
+    def query(
+        self, repo_id: UUID, query_embedding: list[float], n_results: int = 5
+    ) -> list[dict]:
+        results = self._collection.query(
+            query_embeddings=[query_embedding],
+            n_results=n_results,
+            where={"repo_id": str(repo_id)},
+        )
+
+        documents = results.get("documents", [[]])[0]
+        metadatas = results.get("metadatas", [[]])[0]
+
+        output: list[dict] = []
+        for index, document in enumerate(documents):
+            metadata = metadatas[index] if index < len(metadatas) else {}
+            output.append(
+                {
+                    "content": document,
+                    "filepath": metadata.get("filepath", ""),
+                    "chunk_index": metadata.get("chunk_index", "0"),
+                }
+            )
+        return output
+
+
+_chroma_store: ChromaStore | None = None
+
+
+def get_chroma_store() -> ChromaStore:
+    global _chroma_store
+    if _chroma_store is None:
+        _chroma_store = ChromaStore()
+    return _chroma_store

@@ -1,0 +1,61 @@
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.local
+
+# ChromaDB and runtime data
+chroma_data/
+backend/chroma_data/
+backend/chroma/
+
+# IDE and OS
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker (local overrides only; keep compose files tracked)
+docker-compose.override.yml
+
+# Alembic (keep versions/ tracked; ignore local DB scratch)
+*.db
+*.sqlite3
+
+# Temp clones / caches
+*.tmp
+.cache/
+storyteller_*/
