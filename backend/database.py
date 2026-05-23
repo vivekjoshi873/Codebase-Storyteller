@@ -1,10 +1,13 @@
 import os
 from collections.abc import AsyncGenerator
+from pathlib import Path
 
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
+# Load project-root .env when uvicorn runs from backend/
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 load_dotenv()
 
 DATABASE_URL = os.getenv(

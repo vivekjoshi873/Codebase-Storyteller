@@ -13,6 +13,13 @@ class IngestResponse(BaseModel):
     graph: dict
 
 
+class RepoStatusResponse(BaseModel):
+    repo_id: UUID
+    status: str
+    graph: dict
+    error: str | None = None
+
+
 class QueryRequest(BaseModel):
     q: str = Field(..., min_length=1)
     repo_id: UUID

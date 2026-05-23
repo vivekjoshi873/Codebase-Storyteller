@@ -3,6 +3,25 @@ import os
 import re
 from pathlib import Path
 
+SKIP_DIRS = {
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".next",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".tox",
+    ".venv",
+    "__pycache__",
+    "build",
+    "coverage",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "vendor",
+    "venv",
+}
+
 
 def _python_imports(filepath: str, content: str) -> list[dict]:
     edges: list[dict] = []
@@ -60,10 +79,8 @@ def build_graph(repo_path: str) -> dict:
     edges: list[dict] = []
     repo_root = Path(repo_path)
 
-    for root, _, files in os.walk(repo_path):
-        if ".git" in root.split(os.sep):
-            continue
-
+    for root, dirs, files in os.walk(repo_path):
+        dirs[:] = [dirname for dirname in dirs if dirname not in SKIP_DIRS]
         for filename in files:
             full_path = Path(root) / filename
             rel_path = str(full_path.relative_to(repo_root)).replace("\\", "/")

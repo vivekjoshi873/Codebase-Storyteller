@@ -1,20 +1,51 @@
 import os
+from hashlib import sha1
+from pathlib import Path
 from uuid import UUID
 
 import chromadb
 from dotenv import load_dotenv
 
+BACKEND_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = BACKEND_ROOT.parent
+load_dotenv(PROJECT_ROOT / ".env")
 load_dotenv()
+
+
+def _resolve_persist_dir() -> str:
+    persist_dir = Path(os.getenv("CHROMA_PERSIST_DIR", "./chroma_data"))
+    if not persist_dir.is_absolute():
+        persist_dir = BACKEND_ROOT / persist_dir
+    persist_dir.mkdir(parents=True, exist_ok=True)
+    return str(persist_dir)
+
+
+def _chunk_batches(
+    ids: list[str],
+    embeddings: list[list[float]],
+    documents: list[str],
+    metadatas: list[dict],
+    batch_size: int,
+):
+    for start in range(0, len(ids), batch_size):
+        end = start + batch_size
+        yield (
+            ids[start:end],
+            embeddings[start:end],
+            documents[start:end],
+            metadatas[start:end],
+        )
 
 
 class ChromaStore:
     def __init__(self) -> None:
-        persist_dir = os.getenv("CHROMA_PERSIST_DIR", "./chroma_data")
+        persist_dir = _resolve_persist_dir()
         self._client = chromadb.PersistentClient(path=persist_dir)
         self._collection = self._client.get_or_create_collection(
             name="code_chunks",
             metadata={"hnsw:space": "cosine"},
         )
+        self._max_batch_size = getattr(self._client, "get_max_batch_size", lambda: 5000)()
 
     def add_chunks(
         self,
@@ -33,8 +64,8 @@ class ChromaStore:
         for chunk in chunks:
             filepath = chunk["filepath"]
             chunk_index = chunk["chunk_index"]
-            safe_path = filepath.replace("/", "__")
-            chunk_id = f"{repo_id_str}_{safe_path}_{chunk_index}"
+            path_hash = sha1(filepath.encode("utf-8")).hexdigest()
+            chunk_id = f"{repo_id_str}_{path_hash}_{chunk_index}"
             ids.append(chunk_id)
             documents.append(chunk["content"])
             metadatas.append(
@@ -50,12 +81,19 @@ class ChromaStore:
         except Exception:
             pass
 
-        self._collection.add(
-            ids=ids,
-            embeddings=embeddings,
-            documents=documents,
-            metadatas=metadatas,
-        )
+        for batch_ids, batch_embeddings, batch_documents, batch_metadatas in _chunk_batches(
+            ids,
+            embeddings,
+            documents,
+            metadatas,
+            self._max_batch_size,
+        ):
+            self._collection.add(
+                ids=batch_ids,
+                embeddings=batch_embeddings,
+                documents=batch_documents,
+                metadatas=batch_metadatas,
+            )
 
     def query(
         self, repo_id: UUID, query_embedding: list[float], n_results: int = 5

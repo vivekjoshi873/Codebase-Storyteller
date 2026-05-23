@@ -36,10 +36,13 @@ export default function GraphPanel() {
     const height = svgRef.current.clientHeight || 480;
 
     const nodes = (graphData?.nodes || []).map((node) => ({ ...node }));
-    const links = (graphData?.edges || []).map((edge) => ({
-      source: edge.from,
-      target: edge.to,
-    }));
+    const nodeIds = new Set(nodes.map((node) => node.id));
+    const links = (graphData?.edges || [])
+      .filter((edge) => nodeIds.has(edge.from) && nodeIds.has(edge.to))
+      .map((edge) => ({
+        source: edge.from,
+        target: edge.to,
+      }));
 
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
