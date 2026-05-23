@@ -40,8 +40,13 @@ export default function MonacoPanel() {
 
   if (!selectedFile) {
     return (
-      <div className="flex h-full items-center justify-center p-4 text-center text-sm text-zinc-500">
-        Click a node in the graph to view its code
+      <div className="flex h-full items-center justify-center p-6 text-center">
+        <div>
+          <p className="text-sm font-medium text-zinc-300">No file selected</p>
+          <p className="mt-1 text-xs text-zinc-500">
+            Click a graph node to inspect the stored source chunks.
+          </p>
+        </div>
       </div>
     );
   }
@@ -49,23 +54,34 @@ export default function MonacoPanel() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center p-4 text-sm text-zinc-500">
-        Loading {selectedFile}…
+        Loading {selectedFile}...
       </div>
     );
   }
 
   return (
-    <Editor
-      height="100%"
-      theme="vs-dark"
-      language={languageFromPath(selectedFile)}
-      value={fileContent}
-      options={{
-        readOnly: true,
-        minimap: { enabled: false },
-        fontSize: 13,
-        scrollBeyondLastLine: false,
-      }}
-    />
+    <div className="h-full min-h-0">
+      <Editor
+        height="100%"
+        theme="vs-dark"
+        language={languageFromPath(selectedFile)}
+        value={fileContent}
+        options={{
+          readOnly: true,
+          minimap: { enabled: false },
+          fontSize: 13,
+          fontFamily:
+            "JetBrains Mono, Menlo, Monaco, Consolas, 'Liberation Mono', monospace",
+          lineHeight: 21,
+          padding: { top: 12 },
+          scrollbar: {
+            verticalScrollbarSize: 10,
+            horizontalScrollbarSize: 10,
+          },
+          scrollBeyondLastLine: false,
+          wordWrap: "off",
+        }}
+      />
+    </div>
   );
 }

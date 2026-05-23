@@ -8,14 +8,30 @@ const POLL_INTERVAL_MS = 2000;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function PanelHeader({ title, meta }) {
+  return (
+    <div className="flex h-11 items-center justify-between border-b border-zinc-800/80 bg-zinc-950/70 px-4">
+      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+        {title}
+      </span>
+      {meta && <span className="text-xs text-zinc-500">{meta}</span>}
+    </div>
+  );
+}
+
 export default function App() {
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
 
+  const repoId = useStore((s) => s.repoId);
+  const graphData = useStore((s) => s.graphData);
+  const selectedFile = useStore((s) => s.selectedFile);
   const setRepoId = useStore((s) => s.setRepoId);
   const setGraphData = useStore((s) => s.setGraphData);
+
+  const graphMeta = `${graphData.nodes.length.toLocaleString()} files / ${graphData.edges.length.toLocaleString()} imports`;
 
   const pollRepoStatus = async (repoId) => {
     while (true) {
@@ -92,57 +108,66 @@ export default function App() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0f0f0f] text-[#e8e8e8]">
-      <header className="flex items-center gap-4 border-b border-zinc-800 bg-zinc-900 px-5 py-3.5">
-        <h1 className="shrink-0 text-lg font-semibold">Codebase Storyteller</h1>
-        <form onSubmit={handleAnalyse} className="flex flex-1 gap-2">
-          <input
-            type="url"
-            placeholder="https://github.com/owner/repo"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            required
-            className="flex-1 rounded-lg border border-zinc-700 bg-[#0f0f0f] px-3 py-2 text-sm text-[#e8e8e8] outline-none focus:border-emerald-400"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-lg bg-emerald-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading ? "Analysing..." : "Analyse"}
-          </button>
-        </form>
-        {status && !error && (
-          <span className="max-w-md truncate text-xs text-zinc-400">{status}</span>
-        )}
-        {error && (
-          <span className="max-w-xs truncate text-xs text-red-400" title={error}>
-            {error}
-          </span>
-        )}
+    <div className="flex min-h-screen flex-col bg-[#080b0f] text-zinc-100">
+      <header className="border-b border-zinc-800 bg-zinc-950/95 px-4 py-3">
+        <div className="flex items-center gap-4">
+          <div className="flex min-w-[170px] flex-col">
+            <h1 className="text-base font-semibold tracking-tight text-white">
+              Codebase Storyteller
+            </h1>
+            <span className="text-[11px] text-zinc-500">repo map and code chat</span>
+          </div>
+
+          <form onSubmit={handleAnalyse} className="flex min-w-0 flex-1 gap-2">
+            <input
+              type="url"
+              placeholder="https://github.com/owner/repo"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              required
+              className="h-10 min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/15"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="h-10 rounded-md bg-emerald-400 px-5 text-sm font-semibold text-zinc-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? "Analysing..." : "Analyse"}
+            </button>
+          </form>
+
+          <div className="flex min-w-[210px] justify-end">
+            {error ? (
+              <span
+                className="max-w-[260px] truncate rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-xs text-red-300"
+                title={error}
+              >
+                {error}
+              </span>
+            ) : (
+              <span className="max-w-[300px] truncate rounded-full border border-zinc-700 bg-zinc-900 px-3 py-1 text-xs text-zinc-400">
+                {status || (repoId ? "Ready" : "Paste a GitHub repo URL")}
+              </span>
+            )}
+          </div>
+        </div>
       </header>
 
-      <main className="grid min-h-0 flex-1 grid-cols-[40%_35%_25%]">
-        <section className="flex min-h-0 flex-col border-r border-zinc-800">
-          <div className="border-b border-zinc-800 px-3.5 py-2.5 text-xs font-medium uppercase tracking-wider text-zinc-500">
-            Dependency graph
-          </div>
+      <main className="grid min-h-0 flex-1 grid-cols-[40%_35%_25%] overflow-hidden">
+        <section className="flex min-h-0 flex-col border-r border-zinc-800 bg-[#090c10]">
+          <PanelHeader title="Dependency graph" meta={graphMeta} />
           <div className="relative min-h-0 flex-1">
             <GraphPanel />
           </div>
         </section>
 
-        <section className="flex min-h-0 flex-col border-r border-zinc-800">
-          <div className="border-b border-zinc-800 px-3.5 py-2.5 text-xs font-medium uppercase tracking-wider text-zinc-500">
-            Chat
-          </div>
+        <section className="flex min-h-0 flex-col border-r border-zinc-800 bg-[#0b0d11]">
+          <PanelHeader title="Chat" meta={repoId ? "Ask with RAG context" : "Waiting for repo"} />
           <ChatPanel />
         </section>
 
-        <section className="flex min-h-0 flex-col">
-          <div className="border-b border-zinc-800 px-3.5 py-2.5 text-xs font-medium uppercase tracking-wider text-zinc-500">
-            Code viewer
-          </div>
+        <section className="flex min-h-0 flex-col bg-[#0b0d11]">
+          <PanelHeader title="Code viewer" meta={selectedFile || "No file selected"} />
           <div className="relative min-h-0 flex-1">
             <MonacoPanel />
           </div>

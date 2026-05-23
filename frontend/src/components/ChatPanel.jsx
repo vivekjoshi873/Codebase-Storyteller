@@ -38,42 +38,49 @@ export default function ChatPanel() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-3">
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
         {chatMessages.length === 0 && (
-          <p className="p-2 text-xs text-zinc-500">
-            Analyse a repo, then ask a question about its code.
-          </p>
+          <div className="rounded-md border border-dashed border-zinc-800 bg-zinc-950/50 p-4">
+            <p className="text-sm font-medium text-zinc-300">Ask about the codebase</p>
+            <p className="mt-1 text-xs leading-5 text-zinc-500">
+              Once a repo is analysed, questions are answered from retrieved code chunks
+              and cited files will pulse in the graph.
+            </p>
+          </div>
         )}
+
         {chatMessages.map((message, index) => (
           <div
             key={index}
-            className={`max-w-[88%] whitespace-pre-wrap rounded-xl px-3 py-2 text-sm leading-relaxed ${
+            className={`max-w-[90%] whitespace-pre-wrap rounded-md px-3 py-2 text-sm leading-6 shadow-sm ${
               message.role === "user"
-                ? "ml-auto bg-teal-700 text-[#e8e8e8]"
-                : "mr-auto border border-zinc-700 bg-zinc-900 text-[#e8e8e8]"
+                ? "ml-auto bg-emerald-500 text-zinc-950"
+                : "mr-auto border border-zinc-800 bg-zinc-950 text-zinc-200"
             }`}
           >
-            {message.text}
+            {message.text || (
+              <span className="text-zinc-500">Thinking...</span>
+            )}
           </div>
         ))}
       </div>
 
       <form
         onSubmit={handleAsk}
-        className="flex gap-2 border-t border-zinc-800 p-3"
+        className="flex gap-2 border-t border-zinc-800 bg-zinc-950/60 p-3"
       >
         <input
           type="text"
-          placeholder="Ask about this codebase…"
+          placeholder={repoId ? "Ask where something happens..." : "Analyse a repo first"}
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           disabled={!repoId}
-          className="flex-1 rounded-lg border border-zinc-700 bg-[#0f0f0f] px-3 py-2 text-sm text-[#e8e8e8] outline-none focus:border-emerald-400 disabled:opacity-50"
+          className="h-10 min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/15 disabled:opacity-50"
         />
         <button
           type="submit"
-          disabled={!repoId}
-          className="rounded-lg bg-emerald-400 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={!repoId || !question.trim()}
+          className="h-10 rounded-md bg-zinc-100 px-4 text-sm font-semibold text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
         >
           Ask
         </button>
