@@ -98,7 +98,10 @@ export default function GraphPanel() {
       .data(nodes)
       .join("g")
       .attr("cursor", "pointer")
-      .on("click", (_, node) => setSelectedFile(node.id));
+      .on("click", (event, node) => {
+        event.stopPropagation();
+        setSelectedFile(node.id);
+      });
 
     nodeGroup.append("title").text((d) => d.id);
 

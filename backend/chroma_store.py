@@ -1,15 +1,14 @@
+import env_config  # noqa: F401
+
 import os
 from hashlib import sha1
 from pathlib import Path
 from uuid import UUID
 
 import chromadb
-from dotenv import load_dotenv
 
 BACKEND_ROOT = Path(__file__).resolve().parent
-PROJECT_ROOT = BACKEND_ROOT.parent
-load_dotenv(PROJECT_ROOT / ".env")
-load_dotenv()
+PROJECT_ROOT = env_config.PROJECT_ROOT
 
 
 def _resolve_persist_dir() -> str:

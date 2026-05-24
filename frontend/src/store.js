@@ -32,4 +32,19 @@ export const useStore = create((set) => ({
       };
       return { chatMessages: messages };
     }),
+
+  setLastAssistantMessage: (text) =>
+    set((state) => {
+      const messages = [...state.chatMessages];
+      if (messages.length === 0) {
+        return { chatMessages: [{ role: "assistant", text }] };
+      }
+      const last = messages[messages.length - 1];
+      if (last.role !== "assistant") {
+        messages.push({ role: "assistant", text });
+      } else {
+        messages[messages.length - 1] = { ...last, text };
+      }
+      return { chatMessages: messages };
+    }),
 }));

@@ -1,10 +1,11 @@
+import env_config  # noqa: F401 — load .env before other backend imports
+
 import asyncio
 import json
 import logging
 import traceback
 from uuid import UUID
 
-from dotenv import load_dotenv
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
@@ -12,13 +13,12 @@ from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import AsyncSessionLocal, Base, engine, get_db
+from chroma_store import get_chroma_store
 from embedder import preload_embedder
 from ingest import ingest_repo
 from models import Chunk, Repo
 from query import stream_answer
 from schemas import IngestRequest, IngestResponse, RepoStatusResponse
-
-load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -102,9 +102,14 @@ async def _run_ingest_job(repo_id: UUID, repo_url: str) -> None:
 async def startup() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    logger.info("Preloading embedding model in background...")
+    logger.info("Preloading embedding model and ChromaDB...")
     await asyncio.to_thread(preload_embedder)
-    logger.info("Backend ready. POST /api/ingest to analyse a repo.")
+    await asyncio.to_thread(get_chroma_store)
+    logger.info(
+        "Backend ready. OpenAI key …%s (from %s). POST /api/ingest to analyse a repo.",
+        env_config.openai_key_suffix(),
+        env_config.ENV_FILE,
+    )
 
 
 @app.post("/api/ingest", response_model=IngestResponse)
@@ -170,6 +175,11 @@ async def api_query(
     return StreamingResponse(
         stream_answer(q, repo_id),
         media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
     )
 
 

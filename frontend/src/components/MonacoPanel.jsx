@@ -44,7 +44,8 @@ export default function MonacoPanel() {
         <div>
           <p className="text-sm font-medium text-zinc-300">No file selected</p>
           <p className="mt-1 text-xs text-zinc-500">
-            Click a graph node to inspect the stored source chunks.
+            Click a node on the graph, or ask a question that cites a file — the
+            viewer opens when the AI mentions [FILE: path].
           </p>
         </div>
       </div>

@@ -11,6 +11,14 @@ export default defineConfig({
       "/api": {
         target: process.env.VITE_PROXY_TARGET || "http://localhost:8000",
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on("proxyRes", (proxyRes, req) => {
+            if (req.url?.includes("/api/query")) {
+              proxyRes.headers["cache-control"] = "no-cache";
+              proxyRes.headers["x-accel-buffering"] = "no";
+            }
+          });
+        },
       },
     },
   },
