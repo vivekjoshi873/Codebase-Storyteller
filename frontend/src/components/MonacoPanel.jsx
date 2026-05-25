@@ -21,6 +21,8 @@ function getFileInfo(filepath) {
 export default function MonacoPanel() {
   const selectedFile = useStore((s) => s.selectedFile);
   const repoId = useStore((s) => s.repoId);
+  const getCachedFile = useStore((s) => s.getCachedFile);
+  const cacheFile = useStore((s) => s.cacheFile);
   const [fileContent, setFileContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [opacity, setOpacity] = useState(1);
@@ -29,6 +31,15 @@ export default function MonacoPanel() {
     if (!selectedFile || !repoId) {
       setFileContent("");
       return;
+    }
+
+    const cached = getCachedFile(selectedFile);
+    if (cached !== undefined) {
+      setFileContent(cached);
+      setLoading(false);
+      setOpacity(0);
+      const fadeTimer = setTimeout(() => setOpacity(1), 30);
+      return () => clearTimeout(fadeTimer);
     }
 
     setOpacity(0);
@@ -45,7 +56,10 @@ export default function MonacoPanel() {
         if (!response.ok) throw new Error("Failed to load file");
         return response.text();
       })
-      .then((text) => setFileContent(text))
+      .then((text) => {
+        cacheFile(selectedFile, text);
+        setFileContent(text);
+      })
       .catch(() => setFileContent("// Unable to load file content"))
       .finally(() => setLoading(false));
 

@@ -60,9 +60,7 @@ module.exports = {
           '100%': { opacity: '1', transform: 'translateX(0)' },
         },
         themeSweep: {
-          '0%':   { transform: 'translateY(-100%)' },
-          '40%':  { transform: 'translateY(0)' },
-          '60%':  { transform: 'translateY(0)' },
+          '0%':   { transform: 'translateY(0)' },
           '100%': { transform: 'translateY(100%)' },
         },
       },
@@ -76,7 +74,7 @@ module.exports = {
         'node-pulse':  'nodePulse 1.5s ease infinite',
         'spin-slow':   'spin 0.7s linear infinite',
         'progress-in': 'progressIn 0.4s ease forwards',
-        'theme-sweep': 'themeSweep 0.7s ease-in-out forwards',
+        'theme-sweep': 'themeSweep 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards',
       },
       boxShadow: {
         'glow-mint':  '0 0 24px rgba(110,231,183,0.15)',

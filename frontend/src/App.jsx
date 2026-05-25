@@ -94,19 +94,20 @@ export default function App() {
   const toggleTheme = useCallback(() => {
     if (sweeping) return;
     const next = theme === "dark" ? "light" : "dark";
-    setSweepColor(next === "light" ? "#F8FAFC" : "#080B14");
+    const currentColor = theme === "dark" ? "#080B14" : "#F8FAFC";
+    setSweepColor(currentColor);
     setSweeping(true);
 
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       setTheme(next);
       document.documentElement.setAttribute("data-theme", next);
       localStorage.setItem("cs-theme", next);
-    }, 280);
+    });
 
     setTimeout(() => {
       setSweeping(false);
       setSweepColor(null);
-    }, 750);
+    }, 650);
   }, [theme, sweeping]);
 
   const repoName = useMemo(() => {
@@ -233,6 +234,7 @@ export default function App() {
       activeNodes: [],
       selectedFile: null,
       chatMessages: [],
+      fileCache: {},
     });
   };
 
