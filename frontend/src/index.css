@@ -1,1 +1,99 @@
 @import "tailwindcss";
+@config "../tailwind.config.js";
+
+:root {
+  --color-base:            #080B14;
+  --color-surface:         #0E1220;
+  --color-elevated:        #151929;
+  --color-overlay:         #1C2235;
+  --color-mint:            #6EE7B7;
+  --color-indigo:          #818CF8;
+  --color-amber:           #F59E0B;
+  --color-mint-glow:       rgba(110,231,183,0.15);
+  --color-border-subtle:   rgba(255,255,255,0.06);
+  --color-border-default:  rgba(255,255,255,0.10);
+  --color-border-strong:   rgba(110,231,183,0.30);
+  --color-text-primary:    #F1F5F9;
+  --color-text-secondary:  #94A3B8;
+  --color-text-muted:      #475569;
+  --gradient-from:         #6EE7B7;
+  --gradient-to:           #818CF8;
+  --user-bubble-from:      #1e3a5f;
+  --user-bubble-to:        #1e2d4f;
+}
+
+[data-theme="light"] {
+  --color-base:            #F8FAFC;
+  --color-surface:         #FFFFFF;
+  --color-elevated:        #F1F5F9;
+  --color-overlay:         #E2E8F0;
+  --color-mint:            #059669;
+  --color-indigo:          #4F46E5;
+  --color-amber:           #D97706;
+  --color-mint-glow:       rgba(5,150,105,0.08);
+  --color-border-subtle:   rgba(0,0,0,0.06);
+  --color-border-default:  rgba(0,0,0,0.10);
+  --color-border-strong:   rgba(5,150,105,0.25);
+  --color-text-primary:    #0F172A;
+  --color-text-secondary:  #475569;
+  --color-text-muted:      #94A3B8;
+  --gradient-from:         #059669;
+  --gradient-to:           #4F46E5;
+  --user-bubble-from:      #DBEAFE;
+  --user-bubble-to:        #E0E7FF;
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+
+  html, body, #root {
+    @apply h-full bg-base text-text-primary font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: rgba(110,231,183,0.2);
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full;
+    background: rgba(255,255,255,0.10);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(110,231,183,0.30);
+  }
+
+  [data-theme="light"] ::selection {
+    background: rgba(5,150,105,0.2);
+  }
+
+  [data-theme="light"] ::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.12);
+  }
+  [data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(5,150,105,0.35);
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(135deg, var(--gradient-from), var(--gradient-to));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .bg-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--gradient-from) 0%,
+      var(--gradient-to) 50%,
+      var(--gradient-from) 100%
+    );
+    background-size: 200% auto;
+  }
+  .node-pulse {
+    animation: nodePulse 1.5s ease infinite;
+  }
+}
