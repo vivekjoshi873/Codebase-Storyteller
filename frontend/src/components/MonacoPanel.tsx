@@ -1,32 +1,34 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import Editor from "@monaco-editor/react";
+import type { BeforeMount, OnMount } from "@monaco-editor/react";
+import type { editor } from "monaco-editor";
 import { useStore } from "../store";
 
-function languageFromPath(filepath) {
+const languageFromPath = (filepath: string): string => {
   if (!filepath) return "plaintext";
   if (filepath.endsWith(".py")) return "python";
   if (filepath.endsWith(".ts") || filepath.endsWith(".tsx")) return "typescript";
   if (filepath.endsWith(".js") || filepath.endsWith(".jsx")) return "javascript";
   return "plaintext";
-}
+};
 
-function getFileInfo(filepath) {
+const getFileInfo = (filepath: string | null): { name: string; ext: string } => {
   if (!filepath) return { name: "", ext: "" };
   const parts = filepath.split("/");
   const name = parts[parts.length - 1] || "";
   const extMatch = name.match(/\.(\w+)$/);
   return { name, ext: extMatch ? extMatch[1] : "" };
-}
+};
 
-export default function MonacoPanel() {
+const MonacoPanel = (): JSX.Element => {
   const selectedFile = useStore((s) => s.selectedFile);
   const repoId = useStore((s) => s.repoId);
   const getCachedFile = useStore((s) => s.getCachedFile);
   const cacheFile = useStore((s) => s.cacheFile);
-  const [fileContent, setFileContent] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [fileContent, setFileContent] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!selectedFile || !repoId) {
       setFileContent("");
       return;
@@ -43,19 +45,19 @@ export default function MonacoPanel() {
 
     setLoading(true);
     fetch(`/api/file?${params.toString()}`)
-      .then((response) => {
+      .then((response: Response) => {
         if (!response.ok) throw new Error("Failed to load file");
         return response.text();
       })
-      .then((text) => {
+      .then((text: string) => {
         cacheFile(selectedFile, text);
         setFileContent(text);
       })
       .catch(() => setFileContent("// Unable to load file content"))
       .finally(() => setLoading(false));
-  }, [selectedFile, repoId]);
+  }, [selectedFile, repoId, getCachedFile, cacheFile]);
 
-  const handleBeforeMount = (monaco) => {
+  const handleBeforeMount: BeforeMount = (monaco): void => {
     monaco.editor.defineTheme("editorial-dark", {
       base: "vs-dark",
       inherit: true,
@@ -78,6 +80,11 @@ export default function MonacoPanel() {
         "editorIndentGuide.activeBackground": "#2A2A2A",
       },
     });
+  };
+
+  const handleEditorMount: OnMount = (editorInstance: editor.IStandaloneCodeEditor, monaco): void => {
+    void editorInstance;
+    monaco.editor.setTheme("editorial-dark");
   };
 
   const { name: fileName, ext: fileExt } = getFileInfo(selectedFile);
@@ -116,6 +123,7 @@ export default function MonacoPanel() {
           <Editor
             height="100%"
             beforeMount={handleBeforeMount}
+            onMount={handleEditorMount}
             theme="editorial-dark"
             language={languageFromPath(selectedFile)}
             value={fileContent}
@@ -143,4 +151,7 @@ export default function MonacoPanel() {
       )}
     </div>
   );
-}
+};
+
+export default MonacoPanel;
+
