@@ -25,7 +25,6 @@ export default function MonacoPanel() {
   const cacheFile = useStore((s) => s.cacheFile);
   const [fileContent, setFileContent] = useState("");
   const [loading, setLoading] = useState(false);
-  const [opacity, setOpacity] = useState(1);
 
   useEffect(() => {
     if (!selectedFile || !repoId) {
@@ -37,18 +36,10 @@ export default function MonacoPanel() {
     if (cached !== undefined) {
       setFileContent(cached);
       setLoading(false);
-      setOpacity(0);
-      const fadeTimer = setTimeout(() => setOpacity(1), 30);
-      return () => clearTimeout(fadeTimer);
+      return;
     }
 
-    setOpacity(0);
-    const fadeTimer = setTimeout(() => setOpacity(1), 150);
-
-    const params = new URLSearchParams({
-      repo_id: repoId,
-      filepath: selectedFile,
-    });
+    const params = new URLSearchParams({ repo_id: repoId, filepath: selectedFile });
 
     setLoading(true);
     fetch(`/api/file?${params.toString()}`)
@@ -62,37 +53,29 @@ export default function MonacoPanel() {
       })
       .catch(() => setFileContent("// Unable to load file content"))
       .finally(() => setLoading(false));
-
-    return () => clearTimeout(fadeTimer);
   }, [selectedFile, repoId]);
 
-  const isLight = document.documentElement.getAttribute("data-theme") === "light";
-
   const handleBeforeMount = (monaco) => {
-    monaco.editor.defineTheme("codebase-dark", {
+    monaco.editor.defineTheme("editorial-dark", {
       base: "vs-dark",
       inherit: true,
-      rules: [],
+      rules: [
+        { token: "comment", foreground: "444444", fontStyle: "italic" },
+        { token: "keyword", foreground: "E8FF8B" },
+        { token: "string", foreground: "A8FF78" },
+        { token: "number", foreground: "F5F5F5" },
+      ],
       colors: {
-        "editor.background": "#0E1220",
-        "editor.lineHighlightBackground": "#151929",
-        "editorLineNumber.foreground": "#475569",
-        "editorLineNumber.activeForeground": "#6EE7B7",
-        "editor.selectionBackground": "rgba(110,231,183,0.15)",
-        "editorCursor.foreground": "#6EE7B7",
-      },
-    });
-    monaco.editor.defineTheme("codebase-light", {
-      base: "vs",
-      inherit: true,
-      rules: [],
-      colors: {
-        "editor.background": "#FFFFFF",
-        "editor.lineHighlightBackground": "#F1F5F9",
-        "editorLineNumber.foreground": "#94A3B8",
-        "editorLineNumber.activeForeground": "#059669",
-        "editor.selectionBackground": "rgba(5,150,105,0.15)",
-        "editorCursor.foreground": "#059669",
+        "editor.background": "#0A0A0A",
+        "editor.foreground": "#888888",
+        "editor.lineHighlightBackground": "#111111",
+        "editor.selectionBackground": "rgba(232,255,139,0.1)",
+        "editorLineNumber.foreground": "#2A2A2A",
+        "editorLineNumber.activeForeground": "#444444",
+        "editorCursor.foreground": "#E8FF8B",
+        "editor.inactiveSelectionBackground": "#1A1A1A",
+        "editorIndentGuide.background": "#1A1A1A",
+        "editorIndentGuide.activeBackground": "#2A2A2A",
       },
     });
   };
@@ -101,74 +84,59 @@ export default function MonacoPanel() {
 
   if (!selectedFile) {
     return (
-      <div className="flex flex-col h-full bg-surface">
-        <div className="flex items-center justify-between px-4 h-9 border-b border-border-subtle flex-shrink-0">
-          <span className="text-[10px] tracking-widest text-text-muted uppercase">
-            CODE VIEWER
-          </span>
-          <span className="text-[10px] text-text-muted">No file selected</span>
+      <div className="flex flex-col h-full bg-canvas">
+        <div className="flex items-center justify-between px-5 h-10 border-b border-border flex-shrink-0">
+          <span className="text-label text-ink-muted tracking-widest uppercase">CODE VIEWER</span>
+          <span className="text-label text-ink-muted">—</span>
         </div>
-        <div className="flex flex-col items-center justify-center h-full text-center px-6">
-          <span className="text-3xl text-text-muted mb-3 opacity-40">
-            &lt;/&gt;
-          </span>
-          <p className="text-sm text-text-secondary mb-1">No file selected</p>
-          <p className="text-xs text-text-muted leading-relaxed max-w-[180px]">
-            Click a node on the graph, or ask a question â€” files open here
-            automatically.
-          </p>
+        <div className="flex flex-col justify-center h-full px-6">
+          <p className="text-label text-ink-muted tracking-widest uppercase mb-4">No file selected</p>
+          <p className="text-sm text-ink-secondary leading-relaxed max-w-[160px]">Click a node on the graph, or ask a question.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full bg-surface">
-      <div className="flex items-center justify-between px-4 h-9 border-b border-border-subtle flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-text-primary font-mono">
-            {fileName}
-          </span>
-          {fileExt && (
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-overlay border border-border-subtle text-text-muted">
-              {fileExt}
-            </span>
-          )}
+    <div className="flex flex-col h-full bg-canvas">
+      <div className="flex items-center justify-between px-5 h-10 border-b border-border flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-xs text-ink-primary">{fileName}</span>
+          {fileExt && <span className="font-mono text-[10px] text-ink-muted border border-border px-1.5 py-0.5">{fileExt}</span>}
         </div>
-        <span
-          className="text-[10px] font-mono text-text-muted truncate max-w-[120px]"
-          title={selectedFile}
-        >
+        <span className="font-mono text-[10px] text-ink-muted truncate max-w-[100px]" title={selectedFile}>
           {selectedFile}
         </span>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-full text-sm text-text-muted">
-          Loading {fileName}...
-        </div>
+        <div className="flex items-center justify-center h-full text-sm text-ink-muted font-mono">Loading {fileName}...</div>
       ) : (
-        <div
-          className="flex-1 transition-opacity duration-150"
-          style={{ opacity }}
-        >
+        <div className="flex-1">
           <Editor
             height="100%"
             beforeMount={handleBeforeMount}
-            theme={isLight ? "codebase-light" : "codebase-dark"}
+            theme="editorial-dark"
             language={languageFromPath(selectedFile)}
             value={fileContent}
             options={{
               readOnly: true,
               minimap: { enabled: false },
               fontSize: 12,
-              lineHeight: 20,
+              lineHeight: 22,
               fontFamily: "'JetBrains Mono', monospace",
+              fontLigatures: true,
               scrollBeyondLastLine: false,
               smoothScrolling: true,
               cursorBlinking: "smooth",
               renderLineHighlight: "line",
-              padding: { top: 12 },
+              padding: { top: 16, bottom: 16 },
+              overviewRulerLanes: 0,
+              hideCursorInOverviewRuler: true,
+              scrollbar: {
+                verticalScrollbarSize: 3,
+                horizontalScrollbarSize: 3,
+              },
             }}
           />
         </div>
