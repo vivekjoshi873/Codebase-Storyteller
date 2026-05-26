@@ -69,11 +69,11 @@ const MonacoPanel = (): JSX.Element => {
       ],
       colors: {
         "editor.background": "#0A0A0A",
-        "editor.foreground": "#888888",
+        "editor.foreground": "#94A3B8",
         "editor.lineHighlightBackground": "#111111",
         "editor.selectionBackground": "rgba(232,255,139,0.1)",
-        "editorLineNumber.foreground": "#2A2A2A",
-        "editorLineNumber.activeForeground": "#444444",
+        "editorLineNumber.foreground": "#252525",
+        "editorLineNumber.activeForeground": "#555555",
         "editorCursor.foreground": "#E8FF8B",
         "editor.inactiveSelectionBackground": "#1A1A1A",
         "editorIndentGuide.background": "#1A1A1A",
@@ -92,9 +92,9 @@ const MonacoPanel = (): JSX.Element => {
   if (!selectedFile) {
     return (
       <div className="flex flex-col h-full bg-canvas">
-        <div className="flex items-center justify-between px-5 h-10 border-b border-border flex-shrink-0">
+        <div className="flex items-center justify-between px-5 h-11 border-b border-[#222222] flex-shrink-0 bg-[#0A0A0A]">
           <span className="text-label text-ink-muted tracking-widest uppercase">CODE VIEWER</span>
-          <span className="text-label text-ink-muted">—</span>
+          <span className="text-label text-ink-muted">-</span>
         </div>
         <div className="flex flex-col justify-center h-full px-6">
           <p className="text-label text-ink-muted tracking-widest uppercase mb-4">No file selected</p>
@@ -106,7 +106,7 @@ const MonacoPanel = (): JSX.Element => {
 
   return (
     <div className="flex flex-col h-full bg-canvas">
-      <div className="flex items-center justify-between px-5 h-10 border-b border-border flex-shrink-0">
+      <div className="flex items-center justify-between px-5 h-11 border-b border-[#222222] flex-shrink-0 bg-[#0A0A0A]">
         <div className="flex items-center gap-3">
           <span className="font-mono text-xs text-ink-primary">{fileName}</span>
           {fileExt && <span className="font-mono text-[10px] text-ink-muted border border-border px-1.5 py-0.5">{fileExt}</span>}
@@ -154,4 +154,3 @@ const MonacoPanel = (): JSX.Element => {
 };
 
 export default MonacoPanel;
-

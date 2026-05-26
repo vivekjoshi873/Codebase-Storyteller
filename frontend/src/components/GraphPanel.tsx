@@ -21,7 +21,7 @@ const ACTIVE_FILL = "#E8FF8B";
 const LABEL_COLOR = "#444444";
 const LABEL_HOVER_COLOR = "#888888";
 const LABEL_ACTIVE_COLOR = "#E8FF8B";
-const LINK_COLOR = "#222222";
+const LINK_COLOR = "#2A2A2A";
 const LARGE_GRAPH_LABEL_LIMIT = 300;
 
 type SimNode = GraphNode & SimulationNodeDatum;
@@ -34,20 +34,28 @@ const GraphPanel = (): JSX.Element => {
   const selectedFile = useStore((s) => s.selectedFile);
   const setSelectedFile = useStore((s) => s.setSelectedFile);
   const entranceDoneRef = useRef<boolean>(false);
-  const [tooltip, setTooltip] = useState<TooltipState>({ x: 0, y: 0, visible: false, label: "", path: "" });
+  const [tooltip, setTooltip] = useState<TooltipState>({
+    x: 0,
+    y: 0,
+    visible: false,
+    label: "",
+    path: "",
+  });
 
   const totalNodes = graphData?.nodes?.length || 0;
   const totalEdges = graphData?.edges?.length || 0;
 
   useEffect((): (() => void) | void => {
+    console.log("GraphPanel render:", graphData.nodes.length, "nodes", graphData.edges.length, "edges");
+
     if (!svgRef.current || !graphData.nodes.length) return;
 
     entranceDoneRef.current = false;
     const svg: Selection<SVGSVGElement, unknown, null, undefined> = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const width = svgRef.current.clientWidth || 640;
-    const height = svgRef.current.clientHeight || 480;
+    const width = svgRef.current.clientWidth || 800;
+    const height = svgRef.current.clientHeight || 600;
 
     const defs = svg.append("defs");
     const filter = defs.append("filter").attr("id", "glow");
@@ -55,6 +63,8 @@ const GraphPanel = (): JSX.Element => {
     const feMerge = filter.append("feMerge");
     feMerge.append("feMergeNode").attr("in", "coloredBlur");
     feMerge.append("feMergeNode").attr("in", "SourceGraphic");
+
+    svg.append("rect").attr("width", width).attr("height", height).attr("fill", "#0A0A0A");
 
     const nodes: SimNode[] = graphData.nodes.map((n) => ({ ...n }));
     const nodeIds = new Set(nodes.map((n) => n.id));
@@ -64,6 +74,10 @@ const GraphPanel = (): JSX.Element => {
 
     const showLabels = nodes.length <= LARGE_GRAPH_LABEL_LIMIT;
     const radius = nodes.length > 1000 ? 3.5 : 5;
+
+    const linkGroup = svg.append("g").attr("class", "links");
+    const nodeGroup = svg.append("g").attr("class", "nodes");
+    const labelGroup = svg.append("g").attr("class", "labels");
 
     const simulation = d3
       .forceSimulation<SimNode>(nodes)
@@ -79,7 +93,6 @@ const GraphPanel = (): JSX.Element => {
       .force("center", d3.forceCenter(width / 2, height / 2))
       .force("collision", d3.forceCollide<SimNode>().radius(radius + 8));
 
-    const linkGroup = svg.append("g").attr("class", "links");
     const link: Selection<SVGLineElement, SimLink, SVGGElement, unknown> = linkGroup
       .selectAll<SVGLineElement, SimLink>("line")
       .data(links)
@@ -88,7 +101,6 @@ const GraphPanel = (): JSX.Element => {
       .attr("stroke-opacity", 1)
       .attr("stroke-width", 1);
 
-    const nodeGroup = svg.append("g").attr("class", "nodes");
     const node: Selection<SVGCircleElement, SimNode, SVGGElement, unknown> = nodeGroup
       .selectAll<SVGCircleElement, SimNode>("circle")
       .data(nodes)
@@ -100,7 +112,6 @@ const GraphPanel = (): JSX.Element => {
       .attr("data-node-id", (d: SimNode) => d.id)
       .style("cursor", "pointer");
 
-    const labelGroup = svg.append("g").attr("class", "labels");
     let label: Selection<SVGTextElement, SimNode, SVGGElement, unknown> | null = null;
     if (showLabels) {
       label = labelGroup
@@ -141,6 +152,7 @@ const GraphPanel = (): JSX.Element => {
       .on("mouseout", function (_event: MouseEvent, d: SimNode): void {
         const isSelected = selectedFile === d.id;
         const isActive = activeNodes.includes(d.id);
+
         d3.select<SVGCircleElement, SimNode>(this)
           .transition()
           .duration(150)
@@ -151,6 +163,7 @@ const GraphPanel = (): JSX.Element => {
         d3.select(svgRef.current)
           .selectAll<SVGTextElement, SimNode>(`text[data-label-id="${CSS.escape(d.id)}"]`)
           .attr("fill", isSelected || isActive ? LABEL_ACTIVE_COLOR : LABEL_COLOR);
+
         setTooltip((prev) => ({ ...prev, visible: false }));
       });
 
@@ -196,7 +209,9 @@ const GraphPanel = (): JSX.Element => {
         .attr("y2", (d: SimLink) => ((d.target as SimNode).y ?? 0));
 
       node.attr("cx", (d: SimNode) => d.x ?? 0).attr("cy", (d: SimNode) => d.y ?? 0);
-      if (label) label.attr("x", (d: SimNode) => d.x ?? 0).attr("y", (d: SimNode) => d.y ?? 0);
+      if (label) {
+        label.attr("x", (d: SimNode) => d.x ?? 0).attr("y", (d: SimNode) => d.y ?? 0);
+      }
     });
 
     const zoom: ZoomBehavior<SVGSVGElement, unknown> = d3
@@ -209,8 +224,10 @@ const GraphPanel = (): JSX.Element => {
       });
     svg.call(zoom);
 
-    return (): void => { simulation.stop(); };
-  }, [graphData, activeNodes, selectedFile, setSelectedFile]);
+    return (): void => {
+      simulation.stop();
+    };
+  }, [graphData.nodes.length]);
 
   useEffect((): void => {
     if (!svgRef.current || !entranceDoneRef.current) return;
@@ -264,6 +281,3 @@ const GraphPanel = (): JSX.Element => {
 };
 
 export default GraphPanel;
-
-
-

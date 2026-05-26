@@ -25,10 +25,13 @@ const App = (): JSX.Element => {
   const [status, setStatus] = useState<string>("");
   const [currentStep, setCurrentStep] = useState<number>(0);
 
+  const repoId = useStore((s) => s.repoId);
   const setRepoId = useStore((s) => s.setRepoId);
   const setRepoName = useStore((s) => s.setRepoName);
   const setGraphData = useStore((s) => s.setGraphData);
   const reset = useStore((s) => s.reset);
+
+  const workspaceStatus: "ready" | "waiting" = repoId ? "ready" : "waiting";
 
   const repoName = useMemo((): string => {
     try {
@@ -149,18 +152,25 @@ const App = (): JSX.Element => {
   if (view === "workspace") {
     return (
       <div className="flex flex-col h-screen bg-canvas overflow-hidden">
-        <div className="flex items-center justify-between px-6 h-10 border-b border-border flex-shrink-0">
+        <div className="flex items-center justify-between px-6 h-12 border-b border-[#222222] flex-shrink-0 bg-[#0A0A0A]">
           <span className="font-mono text-label text-ink-muted tracking-widest uppercase">CODEBASE STORYTELLER</span>
           <div className="flex items-center gap-3">
             <span className="font-mono text-xs text-ink-primary">{repoName}</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
           </div>
-          <button
-            onClick={handleNewRepo}
-            className="text-label text-ink-muted tracking-widest uppercase editorial-link cursor-pointer hover:text-ink-primary transition-colors"
-          >
-            ? NEW REPO
-          </button>
+          <div className="flex items-center gap-5">
+            <div className="flex items-center gap-2">
+              {workspaceStatus === "ready" && <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />}
+              <span className={`text-label tracking-widest uppercase ${workspaceStatus === "ready" ? "text-green-400" : "text-ink-muted"}`}>
+                {workspaceStatus === "ready" ? "READY" : "WAITING FOR REPO"}
+              </span>
+            </div>
+            <button
+              onClick={handleNewRepo}
+              className="text-label text-ink-muted tracking-widest uppercase editorial-link cursor-pointer hover:text-ink-primary transition-colors"
+            >
+              {"<- NEW REPO"}
+            </button>
+          </div>
         </div>
 
         <div className="grid flex-1 overflow-hidden" style={{ gridTemplateColumns: "42% 33% 25%" }}>
@@ -183,9 +193,9 @@ const App = (): JSX.Element => {
       <div className="w-full border-b border-border flex items-center justify-center h-8 px-4">
         <div className="flex items-center gap-2 text-label text-ink-secondary tracking-widest uppercase">
           <span>Codebase Storyteller</span>
-          <span className="text-ink-muted">·</span>
+          <span className="text-ink-muted">Â·</span>
           <span>Paste any public GitHub repo to begin</span>
-          <span className="text-ink-muted">·</span>
+          <span className="text-ink-muted">Â·</span>
           <span className="text-accent font-medium">Free</span>
         </div>
       </div>
@@ -225,7 +235,7 @@ const App = (): JSX.Element => {
                   Analysing
                 </span>
               ) : (
-                "Analyse ?"
+                "Analyse â†’"
               )}
             </button>
           </form>
@@ -255,7 +265,7 @@ const App = (): JSX.Element => {
                 }
                 return (
                   <div key={step} className="flex items-center gap-4 py-3 border-b border-border">
-                    <span className="text-label text-ink-muted">—</span>
+                    <span className="text-label text-ink-muted">-</span>
                     <span className="text-sm text-ink-muted">{step}</span>
                   </div>
                 );
@@ -282,8 +292,8 @@ const App = (): JSX.Element => {
 
       <div className="mt-auto py-8 border-t border-border">
         <div className="max-w-2xl mx-auto px-6 flex items-center justify-between">
-          <span className="text-label text-ink-muted tracking-widest">© 2026 CODEBASE STORYTELLER</span>
-          <span className="text-label text-ink-muted tracking-widest">BUILT WITH FASTAPI · CHROMADB · GPT-4O</span>
+          <span className="text-label text-ink-muted tracking-widest">Â© 2026 CODEBASE STORYTELLER</span>
+          <span className="text-label text-ink-muted tracking-widest">BUILT WITH FASTAPI Â· CHROMADB Â· GPT-4O</span>
         </div>
       </div>
     </div>
@@ -291,5 +301,3 @@ const App = (): JSX.Element => {
 };
 
 export default App;
-
-
