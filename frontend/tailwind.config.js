@@ -1,8 +1,30 @@
 module.exports = {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
+        light: {
+          void: '#F8F6F1',
+          base: '#F2EFE8',
+          surface: '#ECEAE2',
+          raised: '#E5E2D8',
+          overlay: '#DEDAD0',
+          float: '#D8D4C8',
+        },
+        'light-line': {
+          subtle: 'rgba(0,0,0,0.04)',
+          DEFAULT: 'rgba(0,0,0,0.08)',
+          strong: 'rgba(0,0,0,0.14)',
+          focus: 'rgba(0,0,0,0.35)',
+        },
+        'light-ink': {
+          primary: '#0F0F12',
+          secondary: '#4A4A58',
+          muted: '#8A8A9A',
+          disabled: '#C0C0CC',
+          inverted: '#F2EFE8',
+        },
         void: '#050507',
         base: '#0A0A0F',
         surface: '#111118',
@@ -126,6 +148,24 @@ module.exports = {
         stepActivate: { '0%': { opacity: '0.4', transform: 'translateX(-6px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
         nodeEnter: { '0%': { opacity: '0', r: '0' }, '100%': { opacity: '1', r: '5' } },
         menuOpen: { '0%': { opacity: '0', transform: 'scale(0.97) translateY(-8px)' }, '100%': { opacity: '1', transform: 'scale(1) translateY(0)' } },
+        sunRayGrow: {
+          '0%': { transform: 'scale(0) rotate(0deg)', opacity: '0' },
+          '60%': { transform: 'scale(1.2) rotate(10deg)', opacity: '1' },
+          '100%': { transform: 'scale(1) rotate(0deg)', opacity: '1' },
+        },
+        moonSwing: {
+          '0%': { transform: 'rotate(-90deg) scale(0)', opacity: '0' },
+          '60%': { transform: 'rotate(10deg) scale(1.1)', opacity: '1' },
+          '100%': { transform: 'rotate(0deg) scale(1)', opacity: '1' },
+        },
+        toggleSlide: {
+          '0%': { transform: 'translateX(0px)' },
+          '100%': { transform: 'translateX(20px)' },
+        },
+        themeRipple: {
+          '0%': { transform: 'scale(0)', opacity: '0.3' },
+          '100%': { transform: 'scale(40)', opacity: '0' },
+        },
       },
       animation: {
         'fade-up': 'fadeUp 0.4s cubic-bezier(0.16,1,0.3,1) forwards',
@@ -141,6 +181,9 @@ module.exports = {
         'spin-fast': 'spin 0.6s linear infinite',
         'step-activate': 'stepActivate 0.3s ease forwards',
         'menu-open': 'menuOpen 0.18s cubic-bezier(0.16,1,0.3,1) forwards',
+        'sun-ray': 'sunRayGrow 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards',
+        'moon-swing': 'moonSwing 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards',
+        'theme-ripple': 'themeRipple 0.6s ease-out forwards',
       },
       boxShadow: {
         focus: '0 0 0 2px rgba(124,124,250,0.5)',

@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState, type JSX } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type JSX } from "react";
 import GraphPanel from "./components/GraphPanel";
 import ChatPanel from "./components/ChatPanel";
 import MonacoPanel from "./components/MonacoPanel";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useStore } from "./store";
 import type { AppView, GraphData, IngestResponse, StatusResponse } from "@/types";
 
@@ -9,13 +10,22 @@ const POLL_INTERVAL_MS = 2000;
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 const STEPS: Array<{ icon: string; label: string; time: string }> = [
-  { icon: "â–¸", label: "Cloning repository", time: "0.0s" },
-  { icon: "â–¸", label: "Building import graph", time: "1.2s" },
-  { icon: "â–¸", label: "Embedding chunks", time: "3.1s" },
-  { icon: "â–¸", label: "Storing vectors", time: "8.4s" },
+  { icon: ">", label: "Cloning repository", time: "0.0s" },
+  { icon: ">", label: "Building import graph", time: "1.2s" },
+  { icon: ">", label: "Embedding chunks", time: "3.1s" },
+  { icon: ">", label: "Storing vectors", time: "8.4s" },
 ];
 
 const EXAMPLES: string[] = ["pallets/click", "tiangolo/fastapi", "pydantic/pydantic", "encode/httpx"];
+
+const primaryText = "text-[#0F0F12] dark:text-[#F2F2F4]";
+const secondaryText = "text-[#4A4A58] dark:text-[#9B9BA8]";
+const mutedText = "text-[#8A8A9A] dark:text-[#5A5A68]";
+const disabledText = "text-[#C0C0CC] dark:text-[#36363F]";
+const border = "border-black/[0.08] dark:border-white/[0.08]";
+const borderStrong = "border-black/[0.14] dark:border-white/[0.14]";
+const raised = "bg-[#E5E2D8] dark:bg-[#18181F]";
+const primaryButton = "bg-[#0F0F12] dark:bg-[#F2F2F4] text-[#F8F6F1] dark:text-[#0A0A0F]";
 
 const parseRepoName = (value: string): string => {
   try {
@@ -27,25 +37,25 @@ const parseRepoName = (value: string): string => {
 
 const Spinner = ({ tone = "light" }: { tone?: "light" | "dark" }): JSX.Element => {
   const className = tone === "dark"
-    ? "w-3.5 h-3.5 border border-ink-inverted/30 border-t-ink-inverted rounded-full animate-spin-fast"
-    : "w-3.5 h-3.5 border border-ink-muted border-t-accent rounded-full animate-spin-fast";
+    ? "w-3.5 h-3.5 border border-[#F8F6F1]/30 dark:border-[#0A0A0F]/30 border-t-[#F8F6F1] dark:border-t-[#0A0A0F] rounded-full animate-spin-fast"
+    : "w-3.5 h-3.5 border border-[#8A8A9A] dark:border-[#5A5A68] border-t-accent rounded-full animate-spin-fast";
   return <span className={className} aria-hidden="true" />;
 };
 
 const ProductPreview = (): JSX.Element => (
-  <div className="animate-fade-up lg:animate-slide-right relative w-full max-w-[620px] ml-auto" style={{ animationDelay: "0.2s" }}>
-    <div className="rounded-2xl border border-line bg-surface overflow-hidden shadow-command">
-      <div className="flex items-center justify-between px-4 h-9 border-b border-line bg-raised">
+  <div className="animate-fade-up lg:animate-slide-right relative w-full max-w-[760px] lg:ml-0" style={{ animationDelay: "0.2s" }}>
+    <div className="theme-aware rounded-2xl border border-black/[0.10] dark:border-white/[0.08] bg-[#ECEAE2] dark:bg-[#111118] overflow-hidden shadow-command">
+      <div className="theme-aware flex items-center justify-between px-4 h-9 border-b border-black/[0.08] dark:border-white/[0.08] bg-[#E5E2D8] dark:bg-[#18181F]">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-green" />
-          <span className="mono-data text-ink-secondary">product-preview</span>
+          <span className={`mono-data ${secondaryText}`}>product-preview</span>
         </div>
-        <span className="eyebrow text-ink-disabled">CODEBASE STORYTELLER</span>
+        <span className={`eyebrow ${disabledText}`}>CODEBASE STORYTELLER</span>
       </div>
       <img
         src="/bg.png"
         alt="Codebase Storyteller dependency graph, AI chat, and code viewer preview"
-        className="block w-full h-[440px] md:h-[520px] object-cover bg-base"
+        className="theme-aware block w-full h-[440px] md:h-[540px] object-cover bg-[#F2EFE8] dark:bg-[#0A0A0F]"
         loading="eager"
       />
     </div>
@@ -162,7 +172,7 @@ const App = (): JSX.Element => {
     }
   };
 
-  const handleAnalyse = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleAnalyse = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     await runAnalyse(url);
   };
@@ -192,48 +202,42 @@ const App = (): JSX.Element => {
 
   if (view === "workspace") {
     return (
-      <div className="flex flex-col h-screen bg-base overflow-hidden">
-        <div className="flex items-center justify-between px-5 h-11 border-b border-line bg-base flex-shrink-0 z-20">
+      <div className="theme-aware flex flex-col h-screen bg-[#F8F6F1] dark:bg-[#0A0A0F] overflow-hidden">
+        <div className="theme-aware flex items-center justify-between px-5 h-11 border-b border-black/[0.06] dark:border-white/[0.06] bg-[#F2EFE8] dark:bg-[#0A0A0F] flex-shrink-0 z-20">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-md bg-ink-primary flex items-center justify-center">
-              <span className="font-mono text-[9px] font-bold text-ink-inverted tracking-[-0.05em]">CS</span>
+            <div className={`theme-aware w-6 h-6 rounded-md ${primaryButton} flex items-center justify-center`}>
+              <span className="font-mono text-[9px] font-bold tracking-[-0.05em]">CS</span>
             </div>
-            <span className="w-px h-3 bg-line-strong" />
-            <span className="text-sm text-ink-secondary">Codebase Storyteller</span>
+            <span className="theme-aware w-px h-3 bg-black/[0.14] dark:bg-white/[0.14]" />
+            <span className={`text-sm ${secondaryText}`}>Codebase Storyteller</span>
           </div>
 
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-line bg-raised hover:border-line-strong transition-all duration-100 cursor-default">
+          <div className={`theme-aware flex items-center gap-2 px-3 py-1.5 rounded-lg border ${border} ${raised} hover:${borderStrong} transition-all duration-200 ease-out cursor-default`}>
             <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
-            <span className="mono-data text-ink-primary">{workspaceRepoName}</span>
-            <span className="text-ink-muted mx-0.5">Â·</span>
-            <span className="mono-data text-ink-muted text-[11px]">{nodeCount} files Â· {edgeCount} imports</span>
+            <span className={`mono-data ${primaryText}`}>{workspaceRepoName}</span>
+            <span className={`${mutedText} mx-0.5`}>-</span>
+            <span className={`mono-data ${mutedText} text-[11px]`}>{nodeCount} files - {edgeCount} imports</span>
           </div>
 
           <div className="flex items-center gap-1">
-            <div className="flex items-center gap-1 px-2 py-1 rounded bg-raised border border-line">
-              <kbd className="font-mono text-[10px] text-ink-muted">âŒ˜K</kbd>
-              <span className="text-[10px] text-ink-muted">Command</span>
-            </div>
-            <div className="flex items-center gap-1 px-2 py-1 rounded bg-raised border border-line">
-              <kbd className="font-mono text-[10px] text-ink-muted">âŒ˜/</kbd>
-              <span className="text-[10px] text-ink-muted">Chat</span>
-            </div>
-            <span className="w-px h-3 bg-line-strong mx-1" />
+          
+            <ThemeToggle className="mx-1" />
+            <span className="theme-aware w-px h-3 bg-black/[0.14] dark:bg-white/[0.14] mx-1" />
             <button
               type="button"
               onClick={handleNewRepo}
-              className="px-3 py-1.5 rounded-lg border border-line text-sm text-ink-secondary hover:text-ink-primary hover:border-line-strong hover:bg-raised transition-all duration-100"
+              className={`px-3 py-1.5 rounded-lg border ${border} text-sm ${secondaryText} hover:${primaryText} hover:border-black/[0.14] dark:hover:border-white/[0.14] hover:bg-[#E5E2D8] dark:hover:bg-[#18181F] transition-all duration-200 ease-out`}
             >
-              â† New repo
+              Back to new repo
             </button>
           </div>
         </div>
 
         <div className="grid flex-1 overflow-hidden" style={{ gridTemplateColumns: "42% 33% 25%" }}>
-          <div className="border-r border-line overflow-hidden">
+          <div className={`theme-aware border-r ${border} overflow-hidden`}>
             <GraphPanel />
           </div>
-          <div className="border-r border-line overflow-hidden">
+          <div className={`theme-aware border-r ${border} overflow-hidden`}>
             <ChatPanel />
           </div>
           <div className="overflow-hidden">
@@ -245,28 +249,29 @@ const App = (): JSX.Element => {
   }
 
   return (
-    <div className="min-h-screen bg-base flex flex-col">
-      <div className="flex items-center justify-between px-8 h-14 border-b border-line bg-base relative z-20">
+    <div className="theme-aware min-h-screen bg-[#F8F6F1] dark:bg-[#0A0A0F] flex flex-col">
+      <div className={`theme-aware flex items-center justify-between px-8 h-14 border-b ${border} bg-[#F8F6F1] dark:bg-[#0A0A0F] relative z-20`}>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-ink-primary flex items-center justify-center flex-shrink-0">
-            <span className="font-mono text-[11px] font-bold text-ink-inverted tracking-[-0.05em]">CS</span>
+          <div className={`theme-aware w-8 h-8 rounded-lg ${primaryButton} flex items-center justify-center flex-shrink-0`}>
+            <span className="font-mono text-[11px] font-bold tracking-[-0.05em]">CS</span>
           </div>
-          <span className="w-px h-4 bg-line-strong mx-1" />
-          <span className="text-md font-medium text-ink-primary">Codebase Storyteller</span>
+          <span className="theme-aware w-px h-4 bg-black/[0.14] dark:bg-white/[0.14] mx-1" />
+          <span className={`text-md font-medium ${primaryText}`}>Codebase Storyteller</span>
         </div>
+        <ThemeToggle />
       </div>
 
       <main className="flex-1 flex items-center justify-center px-8 pb-16 pt-8">
-        <div className="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_620px] gap-16 items-center">
+        <div className="w-full max-w-[1380px] mx-auto grid grid-cols-1 lg:grid-cols-[minmax(400px,500px)_minmax(700px,760px)] gap-10 lg:gap-4 xl:gap-6 items-center justify-center">
           <section>
-            <h1 className="text-display font-semibold text-ink-primary mb-6 animate-fade-up" style={{ animationDelay: "0.06s" }}>
+            <h1 className={`text-display font-semibold ${primaryText} mb-6 animate-fade-up`} style={{ animationDelay: "0.06s" }}>
               Understand <span className="hero-italic">any</span> codebase.
               <br />
               <span className="text-gradient">In minutes.</span>
             </h1>
 
-            <p className="text-lg text-ink-secondary font-light leading-7 mb-10 max-w-[440px] animate-fade-up" style={{ animationDelay: "0.12s" }}>
-              Paste a GitHub URL. Watch the dependency graph render. Ask the AI anything about the codebase â€” answers come from your actual code, not hallucination.
+            <p className={`text-lg ${secondaryText} font-light leading-7 mb-10 max-w-[440px] animate-fade-up`} style={{ animationDelay: "0.12s" }}>
+              Paste a GitHub URL. Watch the dependency graph render. Ask the AI anything about the codebase - answers come from your actual code, not hallucination.
             </p>
 
             <div className="animate-fade-up max-w-[520px]" style={{ animationDelay: "0.18s" }}>
@@ -275,75 +280,74 @@ const App = (): JSX.Element => {
                   <button
                     type="button"
                     onClick={(): void => setShowInput(true)}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-ink-primary text-ink-inverted text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all duration-100 shadow-float-sm"
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-lg ${primaryButton} text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all duration-200 ease-out shadow-float-sm`}
                   >
                     <span>Analyse a repo</span>
-                    <span className="text-sm">â†’</span>
                   </button>
                   <button
                     type="button"
                     onClick={fillWithExample}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-line text-ink-secondary text-sm hover:border-line-strong hover:text-ink-primary hover:bg-raised transition-all duration-100"
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-lg border ${border} ${secondaryText} text-sm hover:border-black/[0.14] dark:hover:border-white/[0.14] hover:text-[#0F0F12] dark:hover:text-[#F2F2F4] hover:bg-[#E5E2D8] dark:hover:bg-[#18181F] transition-all duration-200 ease-out`}
                   >
                     Try an example
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleAnalyse} className="flex items-center rounded-xl border border-line bg-raised overflow-hidden focus-within:border-line-focus focus-within:shadow-focus transition-all duration-150">
+                <form onSubmit={handleAnalyse} className={`theme-aware flex items-center rounded-xl border ${border} ${raised} overflow-hidden focus-within:border-black/[0.35] dark:focus-within:border-white/[0.30] focus-within:shadow-focus transition-all duration-200 ease-out`}>
                   <input
                     type="url"
                     placeholder="https://github.com/owner/repo"
                     value={url}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setUrl(event.target.value)}
+                    onChange={(event: ChangeEvent<HTMLInputElement>): void => setUrl(event.target.value)}
                     required
                     autoFocus
-                    className="flex-1 bg-transparent mono-data text-ink-primary px-4 py-3.5 outline-none placeholder:text-ink-muted placeholder:font-sans"
+                    className={`flex-1 bg-transparent mono-data ${primaryText} px-4 py-3.5 outline-none placeholder:text-[#8A8A9A] dark:placeholder:text-[#5A5A68] placeholder:font-sans`}
                   />
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex items-center gap-2 px-5 py-3.5 bg-ink-primary text-ink-inverted text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all duration-100 border-l border-line whitespace-nowrap disabled:opacity-40"
+                    className={`flex items-center gap-2 px-5 py-3.5 ${primaryButton} text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all duration-200 ease-out border-l ${border} whitespace-nowrap disabled:opacity-40`}
                   >
-                    {loading ? <><Spinner tone="dark" />Analysing</> : "Analyse â†’"}
+                    {loading ? <><Spinner tone="dark" />Analysing</> : "Analyse ->"}
                   </button>
                 </form>
               )}
 
               {error && <p className="mt-4 mono-data text-red">{error}</p>}
-              {status && !loading && <p className="mt-3 mono-data text-ink-muted">{status}</p>}
+              {status && !loading && <p className={`mt-3 mono-data ${mutedText}`}>{status}</p>}
 
               {loading && (
-                <div className="mt-6 rounded-lg bg-raised border border-line overflow-hidden animate-fade-in">
-                  <div className="flex items-center gap-2 px-4 py-2.5 border-b border-line">
+                <div className={`theme-aware mt-6 rounded-lg ${raised} border ${border} overflow-hidden animate-fade-in`}>
+                  <div className={`theme-aware flex items-center gap-2 px-4 py-2.5 border-b ${border}`}>
                     <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                    <span className="mono-data text-ink-muted">ingestion.log</span>
+                    <span className={`mono-data ${mutedText}`}>ingestion.log</span>
                   </div>
                   <div className="px-4 py-3 space-y-1.5 font-mono text-xs">
                     {STEPS.map((step, index) => {
                       const state = index < currentStep ? "done" : index === currentStep ? "active" : "pending";
                       if (state === "done") {
                         return (
-                          <div key={step.label} className="flex items-center gap-3 text-ink-muted log-line" style={{ animationDelay: `${index * 0.08}s` }}>
-                            <span className="text-green">âœ“</span>
-                            <span className="text-ink-secondary">{step.label}</span>
-                            <span className="ml-auto text-ink-disabled mono-data">{step.time}</span>
+                          <div key={step.label} className={`flex items-center gap-3 ${mutedText} log-line`} style={{ animationDelay: `${index * 0.08}s` }}>
+                            <span className="text-green">done</span>
+                            <span className={secondaryText}>{step.label}</span>
+                            <span className={`ml-auto ${disabledText} mono-data`}>{step.time}</span>
                           </div>
                         );
                       }
                       if (state === "active") {
                         return (
-                          <div key={step.label} className="flex items-center gap-3 text-ink-primary log-line animate-step-activate" style={{ animationDelay: `${index * 0.08}s` }}>
-                            <span className="w-2.5 h-2.5 border border-ink-muted border-t-accent rounded-full animate-spin-fast" />
-                            <span className="text-ink-primary font-medium">{step.label}</span>
+                          <div key={step.label} className={`flex items-center gap-3 ${primaryText} log-line animate-step-activate`} style={{ animationDelay: `${index * 0.08}s` }}>
+                            <span className="w-2.5 h-2.5 border border-[#8A8A9A] dark:border-[#5A5A68] border-t-accent rounded-full animate-spin-fast" />
+                            <span className={`${primaryText} font-medium`}>{step.label}</span>
                             <span className="ml-auto text-accent mono-data animate-cursor-blink">...</span>
                           </div>
                         );
                       }
                       return (
-                        <div key={step.label} className="flex items-center gap-3 text-ink-disabled">
+                        <div key={step.label} className={`flex items-center gap-3 ${disabledText}`}>
                           <span className="opacity-30">{step.icon}</span>
                           <span>{step.label}</span>
-                          <span className="ml-auto">â€”</span>
+                          <span className="ml-auto">-</span>
                         </div>
                       );
                     })}
@@ -361,7 +365,7 @@ const App = (): JSX.Element => {
                   onClick={(): void => {
                     void handleExampleClick(example);
                   }}
-                  className="mono-data text-ink-muted hover:text-accent cursor-pointer transition-colors duration-100 underline underline-offset-2 decoration-line"
+                  className={`mono-data ${mutedText} hover:text-accent cursor-pointer transition-colors duration-200 ease-out underline underline-offset-2 decoration-black/[0.08] dark:decoration-white/[0.08]`}
                 >
                   {example}
                 </button>

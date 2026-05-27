@@ -10,19 +10,13 @@ import type {
   ZoomBehavior,
 } from "d3";
 import { useStore } from "../store";
+import { useTheme } from "@/hooks/useTheme";
 import type { D3Link, GraphNode } from "@/types";
 
-const GRAPH_BG = "#0A0A0F";
-const NODE_FILL = "#26263A";
-const NODE_STROKE = "rgba(255,255,255,0.12)";
-const NODE_HOVER_FILL = "#3A3A50";
-const NODE_HOVER_STROKE = "rgba(255,255,255,0.22)";
 const SELECTED_FILL = "#7C7CFA";
 const ACTIVE_FILL = "#E8A838";
-const LABEL_COLOR = "rgba(155,155,168,0.55)";
 const LABEL_SELECTED_COLOR = "#7C7CFA";
 const LABEL_ACTIVE_COLOR = "#E8A838";
-const LINK_COLOR = "rgba(255,255,255,0.05)";
 const LINK_SELECTED_COLOR = "rgba(124,124,250,0.25)";
 const LARGE_GRAPH_LABEL_LIMIT = 300;
 const ACTIVE_CLASS_TIMEOUT_MS = 4000;
@@ -43,12 +37,38 @@ const getLinkNodeId = (node: string | number | SimNode): string => {
   return String(node);
 };
 
+const readGraphTheme = (): {
+  graphBg: string;
+  nodeFill: string;
+  nodeStroke: string;
+  nodeHover: string;
+  edgeColor: string;
+  labelColor: string;
+  labelHover: string;
+  gradC1: string;
+  gradC2: string;
+} => {
+  const style = getComputedStyle(document.documentElement);
+  return {
+    graphBg: style.getPropertyValue("--graph-bg").trim(),
+    nodeFill: style.getPropertyValue("--graph-node-fill").trim(),
+    nodeStroke: style.getPropertyValue("--graph-node-stroke").trim(),
+    nodeHover: style.getPropertyValue("--graph-node-hover").trim(),
+    edgeColor: style.getPropertyValue("--graph-edge").trim(),
+    labelColor: style.getPropertyValue("--graph-label").trim(),
+    labelHover: style.getPropertyValue("--graph-label-hover").trim(),
+    gradC1: style.getPropertyValue("--graph-gradient-c1").trim(),
+    gradC2: style.getPropertyValue("--graph-gradient-c2").trim(),
+  };
+};
+
 const GraphPanel = (): JSX.Element => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const graphData = useStore((s) => s.graphData);
   const activeNodes = useStore((s) => s.activeNodes);
   const selectedFile = useStore((s) => s.selectedFile);
   const setSelectedFile = useStore((s) => s.setSelectedFile);
+  const { theme } = useTheme();
   const entranceDoneRef = useRef<boolean>(false);
   const selectedFileRef = useRef<string | null>(selectedFile);
   const activeNodesRef = useRef<string[]>(activeNodes);
@@ -77,15 +97,17 @@ const GraphPanel = (): JSX.Element => {
 
     entranceDoneRef.current = false;
     const svg: Selection<SVGSVGElement, unknown, null, undefined> = d3.select(svgRef.current);
+    svg.interrupt().transition().duration(150).style("opacity", 0);
     svg.selectAll("*").remove();
 
+    const { graphBg, nodeFill, nodeStroke, nodeHover, edgeColor, labelColor, labelHover, gradC1, gradC2 } = readGraphTheme();
     const width = svgRef.current.clientWidth || 800;
     const height = svgRef.current.clientHeight || 600;
 
     const defs = svg.append("defs");
     const radialGradient = defs.append("radialGradient").attr("id", "graphBg").attr("cx", "50%").attr("cy", "50%").attr("r", "45%");
-    radialGradient.append("stop").attr("offset", "0%").attr("stop-color", "#1F1F28").attr("stop-opacity", "0.6");
-    radialGradient.append("stop").attr("offset", "100%").attr("stop-color", GRAPH_BG).attr("stop-opacity", "0");
+    radialGradient.append("stop").attr("offset", "0%").attr("stop-color", gradC1);
+    radialGradient.append("stop").attr("offset", "100%").attr("stop-color", gradC2);
 
     const glow = defs.append("filter").attr("id", "nodeGlow").attr("x", "-50%").attr("y", "-50%").attr("width", "200%").attr("height", "200%");
     glow.append("feGaussianBlur").attr("stdDeviation", "4").attr("result", "blur");
@@ -99,7 +121,7 @@ const GraphPanel = (): JSX.Element => {
     pulseMerge.append("feMergeNode").attr("in", "blur");
     pulseMerge.append("feMergeNode").attr("in", "SourceGraphic");
 
-    svg.append("rect").attr("width", width).attr("height", height).attr("fill", GRAPH_BG);
+    svg.append("rect").attr("width", "100%").attr("height", "100%").attr("fill", graphBg);
     svg.append("rect").attr("width", "100%").attr("height", "100%").attr("fill", "url(#graphBg)");
 
     const nodes: SimNode[] = graphData.nodes.map((node) => ({ ...node }));
@@ -138,7 +160,7 @@ const GraphPanel = (): JSX.Element => {
       .selectAll<SVGLineElement, SimLink>("line")
       .data(links)
       .join("line")
-      .attr("stroke", LINK_COLOR)
+      .attr("stroke", edgeColor)
       .attr("stroke-opacity", 1)
       .attr("stroke-width", 1)
       .attr("data-source-id", (item: SimLink) => getLinkNodeId(item.source as string | number | SimNode))
@@ -149,8 +171,8 @@ const GraphPanel = (): JSX.Element => {
       .data(nodes)
       .join("circle")
       .attr("r", radius)
-      .attr("fill", NODE_FILL)
-      .attr("stroke", NODE_STROKE)
+      .attr("fill", nodeFill)
+      .attr("stroke", nodeStroke)
       .attr("stroke-width", 1.5)
       .attr("data-node-id", (item: SimNode) => item.id)
       .style("cursor", "pointer");
@@ -164,7 +186,7 @@ const GraphPanel = (): JSX.Element => {
         .text((item: SimNode) => item.label)
         .attr("font-size", 9)
         .attr("font-family", "JetBrains Mono, monospace")
-        .attr("fill", LABEL_COLOR)
+        .attr("fill", labelColor)
         .attr("text-anchor", "middle")
         .attr("dy", -10)
         .attr("data-label-id", (item: SimNode) => item.id)
@@ -180,8 +202,8 @@ const GraphPanel = (): JSX.Element => {
           const sourceId = getLinkNodeId(item.source as string | number | SimNode);
           const targetId = getLinkNodeId(item.target as string | number | SimNode);
           if (selectedFileRef.current && (sourceId === selectedFileRef.current || targetId === selectedFileRef.current)) return LINK_SELECTED_COLOR;
-          if (highlighted && (sourceId === nodeId || targetId === nodeId)) return "rgba(255,255,255,0.18)";
-          return LINK_COLOR;
+          if (highlighted && (sourceId === nodeId || targetId === nodeId)) return labelHover;
+          return edgeColor;
         })
         .attr("stroke-width", (item: SimLink) => {
           const sourceId = getLinkNodeId(item.source as string | number | SimNode);
@@ -196,8 +218,8 @@ const GraphPanel = (): JSX.Element => {
           .transition()
           .duration(120)
           .attr("r", 7)
-          .attr("fill", NODE_HOVER_FILL)
-          .attr("stroke", NODE_HOVER_STROKE);
+          .attr("fill", nodeHover)
+          .attr("stroke", labelHover);
 
         updateConnectedLinks(item.id, true);
 
@@ -223,13 +245,13 @@ const GraphPanel = (): JSX.Element => {
           .transition()
           .duration(120)
           .attr("r", isSelected ? 7 : isActive ? 8 : radius)
-          .attr("fill", isActive ? ACTIVE_FILL : isSelected ? SELECTED_FILL : NODE_FILL)
-          .attr("stroke", isActive ? ACTIVE_FILL : isSelected ? SELECTED_FILL : NODE_STROKE)
+          .attr("fill", isActive ? ACTIVE_FILL : isSelected ? SELECTED_FILL : nodeFill)
+          .attr("stroke", isActive ? ACTIVE_FILL : isSelected ? SELECTED_FILL : nodeStroke)
           .attr("filter", isActive ? "url(#nodePulseGlow)" : isSelected ? "url(#nodeGlow)" : null);
 
         d3.select(svgRef.current)
           .selectAll<SVGTextElement, SimNode>(`text[data-label-id="${CSS.escape(item.id)}"]`)
-          .attr("fill", isActive ? LABEL_ACTIVE_COLOR : isSelected ? LABEL_SELECTED_COLOR : LABEL_COLOR);
+          .attr("fill", isActive ? LABEL_ACTIVE_COLOR : isSelected ? LABEL_SELECTED_COLOR : labelColor);
 
         updateConnectedLinks(item.id, false);
         setTooltip((prev) => ({ ...prev, visible: false }));
@@ -291,23 +313,25 @@ const GraphPanel = (): JSX.Element => {
         labelGroup.attr("transform", event.transform.toString());
       });
     svg.call(zoom);
+    svg.transition().duration(150).style("opacity", 1);
 
     return (): void => {
       simulation.stop();
     };
-  }, [graphData, setSelectedFile]);
+  }, [graphData, setSelectedFile, theme]);
 
   useEffect((): (() => void) | void => {
     if (!svgRef.current || !entranceDoneRef.current) return;
     const svg = d3.select(svgRef.current);
+    const { nodeFill, nodeStroke, edgeColor, labelColor } = readGraphTheme();
 
     svg
       .selectAll<SVGCircleElement, SimNode>("circle[data-node-id]")
       .classed("node-pulse-active", (item: SimNode) => activeNodes.includes(item.id))
       .transition()
       .duration(120)
-      .attr("fill", (item: SimNode) => (activeNodes.includes(item.id) ? ACTIVE_FILL : selectedFile === item.id ? SELECTED_FILL : NODE_FILL))
-      .attr("stroke", (item: SimNode) => (activeNodes.includes(item.id) ? ACTIVE_FILL : selectedFile === item.id ? SELECTED_FILL : NODE_STROKE))
+      .attr("fill", (item: SimNode) => (activeNodes.includes(item.id) ? ACTIVE_FILL : selectedFile === item.id ? SELECTED_FILL : nodeFill))
+      .attr("stroke", (item: SimNode) => (activeNodes.includes(item.id) ? ACTIVE_FILL : selectedFile === item.id ? SELECTED_FILL : nodeStroke))
       .attr("r", (item: SimNode) => {
         if (activeNodes.includes(item.id)) return 8;
         if (selectedFile === item.id) return 7;
@@ -319,7 +343,7 @@ const GraphPanel = (): JSX.Element => {
       .selectAll<SVGTextElement, SimNode>("text[data-label-id]")
       .transition()
       .duration(120)
-      .attr("fill", (item: SimNode) => (activeNodes.includes(item.id) ? LABEL_ACTIVE_COLOR : selectedFile === item.id ? LABEL_SELECTED_COLOR : LABEL_COLOR));
+      .attr("fill", (item: SimNode) => (activeNodes.includes(item.id) ? LABEL_ACTIVE_COLOR : selectedFile === item.id ? LABEL_SELECTED_COLOR : labelColor));
 
     svg
       .selectAll<SVGLineElement, SimLink>("line")
@@ -328,7 +352,7 @@ const GraphPanel = (): JSX.Element => {
       .attr("stroke", (item: SimLink) => {
         const sourceId = getLinkNodeId(item.source as string | number | SimNode);
         const targetId = getLinkNodeId(item.target as string | number | SimNode);
-        return selectedFile && (sourceId === selectedFile || targetId === selectedFile) ? LINK_SELECTED_COLOR : LINK_COLOR;
+        return selectedFile && (sourceId === selectedFile || targetId === selectedFile) ? LINK_SELECTED_COLOR : edgeColor;
       })
       .attr("stroke-width", (item: SimLink) => {
         const sourceId = getLinkNodeId(item.source as string | number | SimNode);
@@ -343,34 +367,34 @@ const GraphPanel = (): JSX.Element => {
     }, ACTIVE_CLASS_TIMEOUT_MS);
 
     return (): void => window.clearTimeout(timeout);
-  }, [activeNodes, selectedFile]);
+  }, [activeNodes, selectedFile, theme]);
 
   return (
-    <div className="relative w-full h-full bg-base overflow-hidden">
-      <div className="panel-header absolute top-0 left-0 right-0 z-10">
-        <span className="eyebrow">DEPENDENCY GRAPH</span>
-        <span className="mono-data text-ink-muted text-[11px]">{totalNodes} FILES Â· {totalEdges} IMPORTS</span>
+    <div className="theme-aware relative w-full h-full bg-[#F2EFE8] dark:bg-[#0A0A0F] overflow-hidden">
+      <div className="theme-aware flex items-center justify-between h-10 px-5 bg-[#F2EFE8] dark:bg-[#0A0A0F] border-b border-black/[0.06] dark:border-white/[0.06] absolute top-0 left-0 right-0 z-10">
+        <span className="eyebrow text-[#8A8A9A] dark:text-[#5A5A68]">DEPENDENCY GRAPH</span>
+        <span className="mono-data text-[#8A8A9A] dark:text-[#5A5A68] text-[11px]">{totalNodes} FILES - {totalEdges} IMPORTS</span>
       </div>
 
       <svg ref={svgRef} width="100%" height="100%" />
 
       <div
-        className="absolute pointer-events-none z-30 shadow-float rounded-lg border border-line bg-float px-3 py-2 min-w-[160px] transition-opacity duration-100"
+        className="absolute pointer-events-none z-30 shadow-float rounded-lg border border-black/[0.08] dark:border-white/[0.08] bg-[#D8D4C8] dark:bg-[#26263A] px-3 py-2 min-w-[160px] transition-all duration-200 ease-out"
         style={{ left: tooltip.x + 14, top: tooltip.y - 8, opacity: tooltip.visible ? 1 : 0 }}
       >
-        <div className="text-sm font-medium text-ink-primary font-mono">{tooltip.label}</div>
-        <div className="text-[11px] text-ink-muted mono-data mt-0.5 truncate max-w-[200px]">{tooltip.path}</div>
-        <div className="my-2 border-t border-line" />
+        <div className="text-sm font-medium text-[#0F0F12] dark:text-[#F2F2F4] font-mono">{tooltip.label}</div>
+        <div className="text-[11px] text-[#8A8A9A] dark:text-[#5A5A68] mono-data mt-0.5 truncate max-w-[200px]">{tooltip.path}</div>
+        <div className="my-2 border-t border-black/[0.08] dark:border-white/[0.08]" />
         <div className="flex items-center gap-3">
-          <span className="text-[10px] text-ink-muted">Imports</span>
-          <span className="text-[10px] mono-data text-ink-secondary">{tooltip.imports} imports</span>
+          <span className="text-[10px] text-[#8A8A9A] dark:text-[#5A5A68]">Imports</span>
+          <span className="text-[10px] mono-data text-[#4A4A58] dark:text-[#9B9BA8]">{tooltip.imports} imports</span>
         </div>
       </div>
 
       {!!totalNodes && (
         <div className="absolute bottom-5 left-5 z-10">
-          <div className="font-mono text-[52px] font-bold text-ink-primary leading-none tracking-[-0.04em]">{totalNodes}</div>
-          <div className="eyebrow mt-1">FILES ANALYSED</div>
+          <div className="font-mono text-[52px] font-bold text-[#0F0F12] dark:text-[#F2F2F4] leading-none tracking-[-0.04em]">{totalNodes}</div>
+          <div className="eyebrow text-[#8A8A9A] dark:text-[#5A5A68] mt-1">FILES ANALYSED</div>
         </div>
       )}
     </div>
