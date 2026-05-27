@@ -206,6 +206,16 @@ const ChatPanel = (): JSX.Element => {
     clearLastStreaming();
   };
 
+  const handleCancel = (): void => {
+    if (!asking) return;
+    const messages = useStore.getState().chatMessages;
+    const last = messages[messages.length - 1];
+    if (last?.role === "assistant" && !last.text?.trim()) {
+      setLastAssistantMessage("Query cancelled by user.");
+    }
+    finishStream();
+  };
+
   const startSSEQuery = (q: string): void => {
     if (!repoId) return;
 
@@ -347,13 +357,26 @@ const ChatPanel = (): JSX.Element => {
             rows={1}
             className="flex-1 bg-transparent mono-data text-[#0F0F12] dark:text-[#F2F2F4] px-5 py-4 outline-none resize-none placeholder:text-[#8A8A9A] dark:placeholder:text-[#5A5A68] placeholder:font-sans placeholder:text-sm min-h-[52px] max-h-[140px] border-r border-black/[0.08] dark:border-white/[0.08] text-sm leading-relaxed disabled:cursor-not-allowed transition-colors duration-200 ease-out"
           />
-          <button
-            type="submit"
-            disabled={!repoId || !question.trim() || asking}
-            className="flex items-center justify-center w-14 h-full min-h-[52px] bg-[#0F0F12] dark:bg-[#F2F2F4] text-[#F8F6F1] dark:text-[#0A0A0F] text-lg font-medium hover:opacity-90 active:scale-[0.98] transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            {asking ? <span className="w-4 h-4 border-2 border-[#F8F6F1]/30 dark:border-[#0A0A0F]/30 border-t-[#F8F6F1] dark:border-t-[#0A0A0F] rounded-full animate-spin-fast" /> : "->"}
-          </button>
+          {asking ? (
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex items-center justify-center w-14 h-full min-h-[52px] bg-red hover:bg-red/90 text-white dark:bg-red dark:hover:bg-red/90 text-lg font-medium hover:opacity-95 active:scale-[0.95] transition-all duration-150 ease-out animate-scale-in flex-shrink-0 cursor-pointer"
+              title="Cancel processing"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path fillRule="evenodd" d="M4.5 7.5a3 3 0 0 1 3-3h9a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9Z" clipRule="evenodd" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={!repoId || !question.trim()}
+              className="flex items-center justify-center w-14 h-full min-h-[52px] bg-[#0F0F12] dark:bg-[#F2F2F4] text-[#F8F6F1] dark:text-[#0A0A0F] text-lg font-medium hover:opacity-90 active:scale-[0.98] transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0 cursor-pointer"
+            >
+              -&gt;
+            </button>
+          )}
         </form>
         <div className="theme-aware flex items-center justify-between px-5 py-2 border-t border-black/[0.06] dark:border-white/[0.06]">
          
