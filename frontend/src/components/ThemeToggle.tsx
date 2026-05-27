@@ -26,28 +26,24 @@ interface ThemeToggleProps {
 
 const ThemeToggle = ({ className = "" }: ThemeToggleProps): JSX.Element => {
   const { isDark, toggle } = useTheme();
-  const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const [rippleActive, setRippleActive] = useState<boolean>(false);
-  const animationTimerRef = useRef<number | null>(null);
   const rippleTimerRef = useRef<number | null>(null);
 
   useEffect((): (() => void) => {
     return (): void => {
-      if (animationTimerRef.current !== null) window.clearTimeout(animationTimerRef.current);
       if (rippleTimerRef.current !== null) window.clearTimeout(rippleTimerRef.current);
     };
   }, []);
 
   const handleToggle = useCallback((): void => {
-    if (isAnimating) return;
-
-    setIsAnimating(true);
-    setRippleActive(true);
+    // Fire the toggle immediately — no artificial delay.
     toggle();
 
-    animationTimerRef.current = window.setTimeout((): void => setIsAnimating(false), 400);
-    rippleTimerRef.current = window.setTimeout((): void => setRippleActive(false), 700);
-  }, [isAnimating, toggle]);
+    // Ripple is purely cosmetic and runs concurrently.
+    setRippleActive(true);
+    if (rippleTimerRef.current !== null) window.clearTimeout(rippleTimerRef.current);
+    rippleTimerRef.current = window.setTimeout((): void => setRippleActive(false), 600);
+  }, [toggle]);
 
   return (
     <div className={`relative ${className}`}>
@@ -64,21 +60,21 @@ const ThemeToggle = ({ className = "" }: ThemeToggleProps): JSX.Element => {
       <button
         type="button"
         onClick={handleToggle}
-        disabled={isAnimating}
         aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
         aria-pressed={!isDark}
-        className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-full border select-none overflow-hidden bg-[#E5E2D8] dark:bg-[#18181F] border-black/[0.08] dark:border-white/[0.08] text-[#4A4A58] dark:text-[#9B9BA8] hover:border-black/[0.14] dark:hover:border-white/[0.14] hover:text-[#0F0F12] dark:hover:text-[#F2F2F4] focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-[#F2EFE8] dark:focus-visible:ring-offset-[#0A0A0F] transition-all duration-200 ease-out disabled:cursor-wait"
+        className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-full border select-none overflow-hidden bg-[#E5E2D8] dark:bg-[#18181F] border-black/[0.08] dark:border-white/[0.08] text-[#4A4A58] dark:text-[#9B9BA8] hover:border-black/[0.14] dark:hover:border-white/[0.14] hover:text-[#0F0F12] dark:hover:text-[#F2F2F4] focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-[#F2EFE8] dark:focus-visible:ring-offset-[#0A0A0F] transition-colors duration-180 ease-out"
       >
         <span
-          className={`relative z-10 w-3.5 h-3.5 flex items-center justify-center transition-all duration-200 ease-out ${
-            isDark ? "text-accent opacity-100" : "text-[#8A8A9A] dark:text-[#5A5A68] opacity-45"
+          className={`relative z-10 w-3.5 h-3.5 flex items-center justify-center transition-all duration-180 ease-out ${
+            isDark ? "text-accent opacity-100" : "text-[#8A8A9A] opacity-45"
           }`}
         >
-          <MoonIcon className={`w-3.5 h-3.5 ${!isDark && isAnimating ? "animate-moon-swing" : ""}`} />
+          <MoonIcon className="w-3.5 h-3.5" />
         </span>
 
+        {/* Sliding pill — uses transform for GPU-composited movement, no layout triggers. */}
         <span
-          className={`absolute z-0 w-5 h-5 rounded-full border shadow-float-sm transition-all duration-200 ease-out ${
+          className={`absolute z-0 w-5 h-5 rounded-full border transition-[left] duration-[180ms] ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
             isDark
               ? "left-1.5 bg-[#18181F] border-white/[0.14]"
               : "left-7 bg-[#F8F6F1] border-black/[0.14]"
@@ -87,11 +83,11 @@ const ThemeToggle = ({ className = "" }: ThemeToggleProps): JSX.Element => {
         />
 
         <span
-          className={`relative z-10 w-3.5 h-3.5 flex items-center justify-center transition-all duration-200 ease-out ${
-            !isDark ? "text-accent opacity-100" : "text-[#8A8A9A] dark:text-[#5A5A68] opacity-45"
+          className={`relative z-10 w-3.5 h-3.5 flex items-center justify-center transition-all duration-180 ease-out ${
+            !isDark ? "text-accent opacity-100" : "text-[#8A8A9A] opacity-45"
           }`}
         >
-          <SunIcon className={`w-3.5 h-3.5 ${isDark && isAnimating ? "animate-sun-ray" : ""}`} />
+          <SunIcon className="w-3.5 h-3.5" />
         </span>
 
         <span className="sr-only">{isDark ? "Dark mode active" : "Light mode active"}</span>

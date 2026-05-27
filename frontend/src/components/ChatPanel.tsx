@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent, type JSX, type KeyboardEvent, type ChangeEvent } from "react";
 import { useStore } from "../store";
 import type { ChatMessage, GraphNode } from "@/types";
+import { Button } from "./ui/Button";
+import { Input } from "./ui/Input";
+import { Badge } from "./ui/Badge";
+import { List, ListItem } from "./ui/List";
+import { NarrativeMarker } from "./ui/NarrativeMarker";
 
 const SUGGESTIONS: string[] = [
   "How is this codebase structured?",
@@ -135,7 +140,7 @@ const MessageBubble = ({ message, isStreamingCurrent, graphNodes, onFileClick }:
         ) : (
           <>
             {parseMessageText(message.text).map((paragraph, paragraphIndex) => (
-              <p key={`${message.id}-${paragraphIndex}`} className="mb-3 last:mb-0">
+              <NarrativeMarker key={`${message.id}-${paragraphIndex}`} className="mb-3 last:mb-0">
                 {parseParagraphParts(paragraph, graphNodes).map((part, index) => {
                   if (part.type === "file") {
                     return (
@@ -155,7 +160,7 @@ const MessageBubble = ({ message, isStreamingCurrent, graphNodes, onFileClick }:
                   }
                   return <span key={`${message.id}-${paragraphIndex}-${index}`}>{part.content}</span>;
                 })}
-              </p>
+              </NarrativeMarker>
             ))}
             {isStreamingCurrent && <span className="inline-block w-0.5 h-3.5 bg-amber-500 ml-0.5 animate-cursor-blink align-middle" />}
           </>
@@ -286,18 +291,13 @@ const ChatPanel = (): JSX.Element => {
     <div className="theme-aware flex flex-col h-full bg-[#ECEAE2] dark:bg-[#111118] border-x border-black/[0.08] dark:border-white/[0.06]">
       <div className="theme-aware flex items-center justify-between h-10 px-5 bg-[#F2EFE8] dark:bg-[#0A0A0F] border-b border-black/[0.06] dark:border-white/[0.06] flex-shrink-0">
         <span className="eyebrow text-[#8A8A9A] dark:text-[#5A5A68]">CHAT</span>
-        {status === "waiting" && <span className="eyebrow text-[#C0C0CC] dark:text-[#36363F]">WAITING FOR REPO</span>}
-        {status === "ready" && (
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-green" />
-            <span className="eyebrow text-green-text">READY</span>
-          </div>
-        )}
+        {status === "waiting" && <Badge variant="muted">WAITING FOR REPO</Badge>}
+        {status === "ready" && <Badge variant="success">READY</Badge>}
         {status === "streaming" && (
-          <div className="flex items-center gap-2">
+          <Badge variant="warning" className="flex items-center gap-1.5">
             <Spinner />
-            <span className="eyebrow text-accent">THINKING</span>
-          </div>
+            <span>THINKING</span>
+          </Badge>
         )}
       </div>
 
@@ -309,22 +309,21 @@ const ChatPanel = (): JSX.Element => {
             <p className="text-sm text-[#4A4A58] dark:text-[#9B9BA8] leading-relaxed max-w-[240px] mb-8 transition-colors duration-200 ease-out">
               Questions are answered from retrieved code chunks. Files mentioned will pulse on the graph.
             </p>
-            <div className="theme-aware space-y-0 border border-black/[0.08] dark:border-white/[0.08] rounded-xl overflow-hidden">
+            <List className="border border-black/[0.08] dark:border-white/[0.08] rounded-xl overflow-hidden">
               {SUGGESTIONS.map((suggestion: string) => (
-                <button
-                  type="button"
+                <ListItem
                   key={suggestion}
                   onClick={(): void => handleSuggestion(suggestion)}
-                  disabled={!repoId || asking}
-                  className="w-full flex items-center justify-between px-4 py-3 border-b border-black/[0.08] dark:border-white/[0.08] last:border-b-0 cursor-pointer group hover:bg-[#DEDAD0] dark:hover:bg-[#18181F] transition-colors duration-200 ease-out disabled:cursor-not-allowed disabled:opacity-45"
+                  interactive
+                  className="group disabled:cursor-not-allowed disabled:opacity-45"
                 >
                   <span className="text-sm text-[#4A4A58] dark:text-[#9B9BA8] group-hover:text-[#0F0F12] dark:group-hover:text-[#F2F2F4] transition-colors duration-200 ease-out text-left">{suggestion}</span>
                   <span className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <kbd className="text-[10px] mono-data text-[#8A8A9A] dark:text-[#5A5A68] px-1.5 py-0.5 rounded bg-[#DEDAD0] dark:bg-[#1F1F28] border border-black/[0.08] dark:border-white/[0.08]">Enter</kbd>
                   </span>
-                </button>
+                </ListItem>
               ))}
-            </div>
+            </List>
           </div>
         ) : (
           chatMessages.map((message: ChatMessage, index: number) => (
@@ -342,7 +341,8 @@ const ChatPanel = (): JSX.Element => {
 
       <div className="theme-aware flex-shrink-0 bg-[#F2EFE8] dark:bg-[#0A0A0F] border-t border-black/[0.06] dark:border-white/[0.06]">
         <form onSubmit={handleAsk} className="flex items-end gap-0">
-          <textarea
+          <Input
+            multiline
             ref={textareaRef}
             placeholder={repoId ? "Ask anything about this codebase..." : "Analyse a repo first"}
             value={question}
@@ -355,31 +355,30 @@ const ChatPanel = (): JSX.Element => {
             }}
             disabled={!repoId || asking}
             rows={1}
-            className="flex-1 bg-transparent mono-data text-[#0F0F12] dark:text-[#F2F2F4] px-5 py-4 outline-none resize-none placeholder:text-[#8A8A9A] dark:placeholder:text-[#5A5A68] placeholder:font-sans placeholder:text-sm min-h-[52px] max-h-[140px] border-r border-black/[0.08] dark:border-white/[0.08] text-sm leading-relaxed disabled:cursor-not-allowed transition-colors duration-200 ease-out"
+            className="flex-1 bg-transparent border-0 px-5 py-4 outline-none resize-none placeholder:text-[#8A8A9A] dark:placeholder:text-[#5A5A68] min-h-[52px] max-h-[140px] text-sm leading-relaxed disabled:cursor-not-allowed"
           />
           {asking ? (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={handleCancel}
-              className="flex items-center justify-center w-14 h-full min-h-[52px] bg-red hover:bg-red/90 text-white dark:bg-red dark:hover:bg-red/90 text-lg font-medium hover:opacity-95 active:scale-[0.95] transition-all duration-150 ease-out animate-scale-in flex-shrink-0 cursor-pointer"
+              className="w-14 h-full min-h-[52px] rounded-none border-y-0 border-r-0 border-l border-black/[0.08] dark:border-white/[0.08] text-red-500 hover:text-red-600 active:scale-[0.95]"
               title="Cancel processing"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path fillRule="evenodd" d="M4.5 7.5a3 3 0 0 1 3-3h9a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9Z" clipRule="evenodd" />
               </svg>
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               type="submit"
               disabled={!repoId || !question.trim()}
-              className="flex items-center justify-center w-14 h-full min-h-[52px] bg-[#0F0F12] dark:bg-[#F2F2F4] text-[#F8F6F1] dark:text-[#0A0A0F] text-lg font-medium hover:opacity-90 active:scale-[0.98] transition-all duration-200 ease-out disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0 cursor-pointer"
+              className="w-14 h-full min-h-[52px] rounded-none border-y-0 border-r-0 border-l border-black/[0.08] dark:border-white/[0.08] font-bold"
             >
               -&gt;
-            </button>
+            </Button>
           )}
         </form>
         <div className="theme-aware flex items-center justify-between px-5 py-2 border-t border-black/[0.06] dark:border-white/[0.06]">
-         
         </div>
       </div>
     </div>

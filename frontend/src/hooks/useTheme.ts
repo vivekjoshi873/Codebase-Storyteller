@@ -31,20 +31,16 @@ export function useTheme(): UseThemeReturn {
   const applyTheme = useCallback((newTheme: Theme): void => {
     const root = document.documentElement;
 
-    root.classList.add("theme-transitioning");
+    // Single atomic class swap — the CSS custom property transition on :root
+    // handles the smooth animated handoff without touching individual elements.
     root.classList.remove("dark", "light");
     root.classList.add(newTheme);
-    root.style.backgroundColor = newTheme === "light" ? "#F8F6F1" : "#0A0A0F";
 
     try {
       localStorage.setItem("cs-theme", newTheme);
     } catch {
       // localStorage may be unavailable in private or restricted contexts.
     }
-
-    window.setTimeout((): void => {
-      root.classList.remove("theme-transitioning");
-    }, 220);
 
     setThemeState(newTheme);
     dispatchThemeChange(newTheme);

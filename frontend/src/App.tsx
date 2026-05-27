@@ -5,6 +5,10 @@ import MonacoPanel from "./components/MonacoPanel";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useStore } from "./store";
 import type { AppView, GraphData, IngestResponse, StatusResponse } from "@/types";
+import { Button } from "./components/ui/Button";
+import { Input } from "./components/ui/Input";
+import { Card } from "./components/ui/Card";
+import { Badge } from "./components/ui/Badge";
 
 const POLL_INTERVAL_MS = 2000;
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
@@ -212,24 +216,26 @@ const App = (): JSX.Element => {
             <span className={`text-sm ${secondaryText}`}>Codebase Storyteller</span>
           </div>
 
-          <div className={`theme-aware flex items-center gap-2 px-3 py-1.5 rounded-lg border ${border} ${raised} hover:${borderStrong} transition-all duration-200 ease-out cursor-default`}>
-            <span className="w-1.5 h-1.5 rounded-full bg-green animate-pulse" />
-            <span className={`mono-data ${primaryText}`}>{workspaceRepoName}</span>
-            <span className={`${mutedText} mx-0.5`}>-</span>
-            <span className={`mono-data ${mutedText} text-[11px]`}>{nodeCount} files - {edgeCount} imports</span>
+          <div className="flex items-center gap-2">
+            <Badge variant="success" className="animate-pulse flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-current" />
+              <span>{workspaceRepoName}</span>
+            </Badge>
+            <Badge variant="muted">
+              {nodeCount} files - {edgeCount} imports
+            </Badge>
           </div>
 
           <div className="flex items-center gap-1">
-          
             <ThemeToggle className="mx-1" />
             <span className="theme-aware w-px h-3 bg-black/[0.14] dark:bg-white/[0.14] mx-1" />
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={handleNewRepo}
-              className={`px-3 py-1.5 rounded-lg border ${border} text-sm ${secondaryText} hover:${primaryText} hover:border-black/[0.14] dark:hover:border-white/[0.14] hover:bg-[#E5E2D8] dark:hover:bg-[#18181F] transition-all duration-200 ease-out`}
+              className="px-3 py-1.5 text-sm h-8"
             >
               Back to new repo
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -277,39 +283,45 @@ const App = (): JSX.Element => {
             <div className="animate-fade-up max-w-[520px]" style={{ animationDelay: "0.18s" }}>
               {!showInput ? (
                 <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
+                  <Button
+                    variant="primary"
                     onClick={(): void => setShowInput(true)}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-lg ${primaryButton} text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all duration-200 ease-out shadow-float-sm`}
+                    className="shadow-float-sm"
                   >
-                    <span>Analyse a repo</span>
-                  </button>
-                  <button
-                    type="button"
+                    Analyse a repo
+                  </Button>
+                  <Button
+                    variant="secondary"
                     onClick={fillWithExample}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-lg border ${border} ${secondaryText} text-sm hover:border-black/[0.14] dark:hover:border-white/[0.14] hover:text-[#0F0F12] dark:hover:text-[#F2F2F4] hover:bg-[#E5E2D8] dark:hover:bg-[#18181F] transition-all duration-200 ease-out`}
                   >
                     Try an example
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <form onSubmit={handleAnalyse} className={`theme-aware flex items-center rounded-xl border ${border} ${raised} overflow-hidden focus-within:border-black/[0.35] dark:focus-within:border-white/[0.30] focus-within:shadow-focus transition-all duration-200 ease-out`}>
-                  <input
+                  <Input
                     type="url"
                     placeholder="https://github.com/owner/repo"
                     value={url}
                     onChange={(event: ChangeEvent<HTMLInputElement>): void => setUrl(event.target.value)}
                     required
                     autoFocus
-                    className={`flex-1 bg-transparent mono-data ${primaryText} px-4 py-3.5 outline-none placeholder:text-[#8A8A9A] dark:placeholder:text-[#5A5A68] placeholder:font-sans`}
+                    className="flex-1 bg-transparent border-0 px-4 py-3.5 outline-none placeholder:text-[#8A8A9A] dark:placeholder:text-[#5A5A68] placeholder:font-sans focus:ring-0"
                   />
-                  <button
+                  <Button
                     type="submit"
                     disabled={loading}
-                    className={`flex items-center gap-2 px-5 py-3.5 ${primaryButton} text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all duration-200 ease-out border-l ${border} whitespace-nowrap disabled:opacity-40`}
+                    className="rounded-none border-y-0 border-r-0 border-l border-black/[0.08] dark:border-white/[0.08] h-[46px] px-6 whitespace-nowrap"
                   >
-                    {loading ? <><Spinner tone="dark" />Analysing</> : "Analyse ->"}
-                  </button>
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <Spinner tone="dark" />
+                        <span>Analysing</span>
+                      </span>
+                    ) : (
+                      "Analyse ->"
+                    )}
+                  </Button>
                 </form>
               )}
 
@@ -317,12 +329,11 @@ const App = (): JSX.Element => {
               {status && !loading && <p className={`mt-3 mono-data ${mutedText}`}>{status}</p>}
 
               {loading && (
-                <div className={`theme-aware mt-6 rounded-lg ${raised} border ${border} overflow-hidden animate-fade-in`}>
-                  <div className={`theme-aware flex items-center gap-2 px-4 py-2.5 border-b ${border}`}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                    <span className={`mono-data ${mutedText}`}>ingestion.log</span>
-                  </div>
-                  <div className="px-4 py-3 space-y-1.5 font-mono text-xs">
+                <Card
+                  title="ingestion.log"
+                  className="mt-6 animate-fade-in text-xs font-mono"
+                >
+                  <div className="space-y-1.5 font-mono text-xs">
                     {STEPS.map((step, index) => {
                       const state = index < currentStep ? "done" : index === currentStep ? "active" : "pending";
                       if (state === "done") {
@@ -352,7 +363,7 @@ const App = (): JSX.Element => {
                       );
                     })}
                   </div>
-                </div>
+                </Card>
               )}
             </div>
 
@@ -365,7 +376,7 @@ const App = (): JSX.Element => {
                   onClick={(): void => {
                     void handleExampleClick(example);
                   }}
-                  className={`mono-data ${mutedText} hover:text-accent cursor-pointer transition-colors duration-200 ease-out underline underline-offset-2 decoration-black/[0.08] dark:decoration-white/[0.08]`}
+                  className={`mono-data ${mutedText} hover:text-accent dark:hover:text-accent cursor-pointer transition-colors duration-200 ease-out underline underline-offset-2 decoration-black/[0.08] dark:decoration-white/[0.08]`}
                 >
                   {example}
                 </button>
